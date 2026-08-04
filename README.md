@@ -1,7 +1,23 @@
-# Tauri + React + Typescript
+# Origin
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+> Where every coding session begins.
 
-## Recommended IDE Setup
+Origin is a desktop workspace for developers that brings projects, tools, and workflows together into one place.
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+## Status
+
+🚧 In Development
+
+Current Version:
+v0.1.0-alpha (Genesis)
+
+## Tech Stack
+
+- React
+- TypeScript
+- Tauri
+- Rust
+
+## Vision
+
+Reduce the friction between an idea and its execution.
