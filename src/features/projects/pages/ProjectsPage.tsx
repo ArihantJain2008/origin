@@ -2,6 +2,7 @@ import ProjectCard from "@/features/projects/components/ProjectCard";
 import { useProjectStore } from "@/features/projects/store/projectStore";
 import { pickProjectFolder } from "@/features/projects/services/dialog";
 import { createProject } from "@/features/projects/services/projectFactory";
+import { saveProject } from "@/features/projects/services/projectApi";
 
 export default function ProjectsPage() {
   const projects = useProjectStore((state) => state.projects);
@@ -15,6 +16,7 @@ export default function ProjectsPage() {
   const project = await createProject(folder);
 
   addProject(project);
+  await saveProject(project);
 };
 
   return (

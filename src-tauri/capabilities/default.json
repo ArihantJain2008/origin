@@ -9,7 +9,6 @@
     "dialog:default",
     "fs:read-all",
     "shell:default",
-    "shell:allow-execute",
-    "sql:default"
+    "shell:allow-execute"
   ]
 }
