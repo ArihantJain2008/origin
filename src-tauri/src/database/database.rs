@@ -1,22 +1,28 @@
 use rusqlite::{Connection, Result};
+use std::path::Path;
+use std::sync::Mutex;
 
 pub struct Database {
-    connection: Connection,
+    connection: Mutex<Connection>,
+}
+impl Database {
+    pub fn new(path: impl AsRef<Path>) -> Result<Self> {
+    let connection = Connection::open(path)?;
+
+    Ok(Self {
+        connection: Mutex::new(connection),
+    })
 }
 
-impl Database {
-    pub fn new() -> Result<Self> {
-        let connection = Connection::open("origin.db")?;
-
-        Ok(Self { connection })
-    }
-
-    pub fn connection(&self) -> &Connection {
-        &self.connection
-    }
+    pub fn connection(
+    &self,
+) -> std::sync::MutexGuard<'_, Connection> {
+    self.connection.lock().unwrap()
+}
 
     pub fn initialize(&self) -> Result<()> {
-        self.connection.execute_batch(
+        let connection = self.connection.lock().unwrap();
+        connection.execute_batch(
             "
             CREATE TABLE IF NOT EXISTS projects (
                 id TEXT PRIMARY KEY,

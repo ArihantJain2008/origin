@@ -11,19 +11,31 @@ mod services;
 mod state;
 
 use crate::database::database::Database;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-
-    // Initialize database
-    let database = Database::new()
-        .expect("Failed to open database");
-
-    database
-        .initialize()
-        .expect("Failed to initialize database");
-
     tauri::Builder::default()
+        .setup(|app| {
+            let app_data_dir = app
+                .path()
+                .app_data_dir()
+                .expect("Failed to resolve app data directory");
+
+            std::fs::create_dir_all(&app_data_dir)
+                .expect("Failed to create app data directory");
+
+            let database = Database::new(app_data_dir.join("origin.db"))
+                .expect("Failed to open database");
+
+            database
+                .initialize()
+                .expect("Failed to initialize database");
+
+            app.manage(database);
+
+            Ok(())
+        })
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
