@@ -1,5 +1,6 @@
 import { FolderOpen } from "lucide-react";
 import { Project } from "../types/project";
+import { launchProject } from "@/features/workspace/services/launcher";
 
 interface Props {
   project: Project;
@@ -19,6 +20,12 @@ export default function ProjectCard({ project }: Props) {
           </p>
 
           <p className="text-sm text-zinc-500">{project.path}</p>
+
+          <button
+  onClick={() => launchProject(project.path)}
+>
+  Open
+</button>
         </div>
       </div>
     </div>

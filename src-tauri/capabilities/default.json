@@ -7,6 +7,8 @@
     "core:default",
     "opener:default",
     "dialog:default",
-    "fs:read-all"
+    "fs:read-all",
+    "shell:default",
+    "shell:allow-execute"
   ]
 }
