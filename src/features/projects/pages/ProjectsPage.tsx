@@ -12,7 +12,9 @@ export default function ProjectsPage() {
 
   if (!folder || typeof folder !== "string") return;
 
-  addProject(createProject(folder));
+  const project = await createProject(folder);
+
+  addProject(project);
 };
 
   return (
