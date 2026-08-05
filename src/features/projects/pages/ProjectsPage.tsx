@@ -1,19 +1,19 @@
 import ProjectCard from "@/features/projects/components/ProjectCard";
 import { useProjectStore } from "@/features/projects/store/projectStore";
-import { v4 as uuid } from "uuid";
+import { pickProjectFolder } from "@/features/projects/services/dialog";
+import { createProject } from "@/features/projects/services/projectFactory";
 
 export default function ProjectsPage() {
   const projects = useProjectStore((state) => state.projects);
   const addProject = useProjectStore((state) => state.addProject);
 
-  const createSampleProject = () => ({
-    id: uuid(),
-    name: "Expense Tracker",
-    path: "D:\\Projects\\ExpenseTracker",
-    favorite: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
+  const handleAddProject = async () => {
+  const folder = await pickProjectFolder();
+
+  if (!folder || typeof folder !== "string") return;
+
+  addProject(createProject(folder));
+};
 
   return (
     <div className="p-8">
@@ -22,10 +22,7 @@ export default function ProjectsPage() {
 
         <button
           className="rounded-lg bg-blue-600 px-4 py-2 hover:bg-blue-500"
-          onClick={() => {
-            if (projects.length > 0) return;
-            addProject(createSampleProject());
-          }}
+          onClick={handleAddProject}
         >
           Add Project
         </button>
