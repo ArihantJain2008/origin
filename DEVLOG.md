@@ -14,3 +14,23 @@ Completed:
 
 Next:
 - Replace default UI
+
+## Sprint 1 Complete
+
+Today Origin became a usable desktop application.
+
+Completed:
+
+- Application shell
+- Project management
+- Native folder picker
+- Project detection
+- Settings module
+- Rust backend communication
+- Launch projects directly from Origin
+
+Next Sprint:
+
+- SQLite persistence
+- Workspace sessions
+- Git integration

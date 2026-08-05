@@ -1,5 +1,30 @@
 # Changelog
 
+# v0.2.0-alpha (Sprint 1)
+
+## Added
+
+- Native project launcher via Rust backend
+- Project import with folder picker
+- Project framework detection
+- Application shell
+- Navigation sidebar
+- Settings module
+- Preferred editor configuration
+- Project management foundation
+
+## Improved
+
+- React ↔ Rust communication
+- Workspace architecture
+- Modular feature structure
+
+## Notes
+
+Sprint 1 establishes the core workflow of Origin:
+
+Import Project → Detect Framework → Open Project → Launch VS Code
+
 ## v0.1.0-alpha (Genesis)
 
 ### Added
