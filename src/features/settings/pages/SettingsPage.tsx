@@ -1,10 +1,26 @@
 import { useSettingsStore } from "../store/settingsStore";
+import { useEffect } from "react";
 
 export default function SettingsPage() {
   const settings = useSettingsStore((s) => s.settings);
   const setPreferredEditor = useSettingsStore(
     (s) => s.setPreferredEditor
   );
+  const loadSettings = useSettingsStore(
+  (s) => s.loadSettings
+);
+
+useEffect(() => {
+  const initialize = async () => {
+    try {
+      await loadSettings();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  initialize();
+}, [loadSettings]);
 
   return (
     <div className="p-8">
@@ -27,6 +43,13 @@ export default function SettingsPage() {
           <option value="vscode">
             VS Code
           </option>
+          <option value="cursor">
+  Cursor
+</option>
+
+<option value="windsurf">
+  Windsurf
+</option>
         </select>
       </div>
     </div>

@@ -1,11 +1,19 @@
 import { create } from "zustand";
 import { Settings } from "../types/settings";
 import { Editor } from "../types/editor";
+import {
+  saveSettings,
+  loadSettings as loadSettingsFromApi,
+} from "../services/settingsApi";
 
 interface SettingsStore {
   settings: Settings;
 
-  setPreferredEditor: (editor: Editor) => void;
+  setPreferredEditor: (
+    editor: Editor
+  ) => Promise<void>;
+
+  loadSettings: () => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsStore>((set) => ({
@@ -13,11 +21,23 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
     preferredEditor: "vscode",
   },
 
-  setPreferredEditor: (editor) =>
-    set((state) => ({
-      settings: {
-        ...state.settings,
-        preferredEditor: editor,
-      },
-    })),
+  setPreferredEditor: async (editor) => {
+  const settings = {
+    preferredEditor: editor,
+  };
+
+  await saveSettings(settings);
+
+  set({
+    settings,
+  });
+},
+
+loadSettings: async () => {
+  const settings = await loadSettingsFromApi();
+
+  set({
+    settings,
+  });
+},
 }));
