@@ -1,3 +1,9 @@
+// TODO: Replace temporary analysis test with AnalysisStore integration
+// FIXME: Move analysis out of ProjectsPage
+// HACK: Temporary debugging code for Sprint 5
+// TODO: Add error handling for analyzeProject
+
+
 import {
   Grid2X2,
   List,
@@ -5,7 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import { useEffect } from "react";
-
+import { useAnalysisStore } from "@/features/analysis/store/analysisStore";
 import ProjectCard from "@/features/projects/components/ProjectCard";
 import { pickProjectFolder } from "@/features/projects/services/dialog";
 import { createProject } from "@/features/projects/services/projectFactory";
@@ -22,12 +28,30 @@ export default function ProjectsPage() {
   const setSearchQuery = useProjectStore((state) => state.setSearchQuery);
   const projectView = useUiPreferencesStore((state) => state.projectView);
   const setProjectView = useUiPreferencesStore((state) => state.setProjectView);
+  const analyze = useAnalysisStore((state) => state.analyze);
+  
 
   useEffect(() => {
     loadProjects().catch((error) => {
       console.error("Failed to load projects:", error);
     });
   }, [loadProjects]);
+
+  useEffect(() => {
+  if (projects.length === 0) {
+    return;
+  }
+
+  const runAnalysis = async () => {
+    await Promise.all(
+      projects.map((project) =>
+        analyze(project.id, project.path)
+      )
+    );
+  };
+
+  runAnalysis().catch(console.error);
+}, [projects, analyze]);
 
   const filteredProjects = sortProjectsByRecent(projects).filter((project) => {
     const query = searchQuery.toLowerCase();

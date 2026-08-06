@@ -27,3 +27,5 @@ tauri-plugin-fs = "2"
 tauri-plugin-shell = "2"
 rusqlite = { version = "0.40.1", features = ["bundled"] }
 chrono = { version = "0.4", features = ["serde"] }
+walkdir = "2.5"
+regex = "1.11"

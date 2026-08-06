@@ -1,0 +1,14 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TodoItem {
+    pub file: String,
+    pub line: usize,
+    pub kind: String,
+    pub text: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AnalysisDto {
+    pub todos: Vec<TodoItem>,
+}

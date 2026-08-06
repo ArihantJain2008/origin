@@ -2352,6 +2352,7 @@ name = "origin"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "regex",
  "rusqlite",
  "serde",
  "serde_json",
@@ -2361,6 +2362,7 @@ dependencies = [
  "tauri-plugin-fs",
  "tauri-plugin-opener",
  "tauri-plugin-shell",
+ "walkdir",
 ]
 
 [[package]]

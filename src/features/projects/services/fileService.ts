@@ -1,6 +1,11 @@
-import { exists, readTextFile } from "@tauri-apps/plugin-fs";
+import {
+  exists,
+  readTextFile,
+} from "@tauri-apps/plugin-fs";
 
-export async function readJsonFile<T>(path: string): Promise<T | null> {
+export async function readJsonFile<T>(
+  path: string
+): Promise<T | null> {
   const fileExists = await exists(path);
 
   if (!fileExists) return null;
@@ -8,6 +13,20 @@ export async function readJsonFile<T>(path: string): Promise<T | null> {
   try {
     const content = await readTextFile(path);
     return JSON.parse(content) as T;
+  } catch {
+    return null;
+  }
+}
+
+export async function readFile(
+  path: string
+): Promise<string | null> {
+  const fileExists = await exists(path);
+
+  if (!fileExists) return null;
+
+  try {
+    return await readTextFile(path);
   } catch {
     return null;
   }

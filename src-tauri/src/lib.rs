@@ -9,6 +9,7 @@ mod database;
 mod models;
 mod services;
 mod state;
+mod analysis;
 
 use crate::database::database::Database;
 use tauri::Manager;
@@ -52,6 +53,7 @@ pub fn run() {
             commands::projects::update_project_favorite,
             commands::settings::save_settings,
             commands::settings::load_settings,
+            commands::analysis::analyze_project,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

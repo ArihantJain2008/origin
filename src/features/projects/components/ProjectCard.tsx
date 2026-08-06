@@ -19,6 +19,7 @@ import {
 import { useProjectStore } from "../store/projectStore";
 import { Badge, Button, Card } from "@/shared/components/ui";
 import { cn } from "@/lib/utils";
+import { useAnalysisStore } from "@/features/analysis/store/analysisStore";
 
 interface Props {
   project: Project;
@@ -32,6 +33,15 @@ export default function ProjectCard({
   const loadProjects = useProjectStore(
     (state) => state.loadProjects
   );
+
+  const analysis = useAnalysisStore(
+  (state) => state.analysis[project.id]
+);
+
+//  for checking if analysis is being fetched correctly
+
+// console.log(project.name);
+// console.log(analysis?.todos);
 
   const handleOpenProject = async () => {
     await launchProject(project.id, project.path);
@@ -270,6 +280,15 @@ export default function ProjectCard({
                 : "No git"}
           </Badge>
         </div>
+
+        {analysis && (
+  <div className="mt-3">
+    <Badge tone="neutral">
+      📝 {analysis.todos.length} TODO
+      {analysis.todos.length !== 1 ? "s" : ""}
+    </Badge>
+  </div>
+)}
 
         <p
           className={cn(
