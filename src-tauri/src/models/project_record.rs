@@ -1,7 +1,5 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ProjectDto {
+#[derive(Debug)]
+pub struct ProjectRecord {
     pub id: String,
     pub name: String,
     pub path: String,
@@ -15,7 +13,4 @@ pub struct ProjectDto {
     pub updated_at: String,
 
     pub last_opened: Option<String>,
-
-    pub git_branch: Option<String>,
-    pub git_dirty: bool,
 }

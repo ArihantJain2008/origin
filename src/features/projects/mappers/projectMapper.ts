@@ -14,6 +14,9 @@ export interface ProjectDto {
   updated_at: string;
 
   last_opened?: string | null;
+
+  git_branch?: string | null;
+  git_dirty: boolean;
 }
 
 export function mapProjectDto(dto: ProjectDto): Project {
@@ -33,5 +36,8 @@ export function mapProjectDto(dto: ProjectDto): Project {
     updatedAt: dto.updated_at,
 
     lastOpened: dto.last_opened ?? undefined,
+
+    gitBranch: dto.git_branch ?? undefined,
+    gitDirty: dto.git_dirty,
   };
 }

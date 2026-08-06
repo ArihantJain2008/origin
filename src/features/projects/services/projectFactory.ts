@@ -18,18 +18,24 @@ export async function createProject(path: string): Promise<Project> {
 
   const now = new Date().toISOString();
 
-  return {
-    id: uuid(),
-    name: path.split(/[/\\]/).pop() ?? "Project",
-    path,
+ return {
+  id: uuid(),
+  name: path.split(/[/\\]/).pop() ?? "Project",
+  path,
 
-    metadata: {
-      framework,
-      language,
-    },
+  metadata: {
+    framework,
+    language,
+  },
 
-    favorite: false,
-    createdAt: now,
-    updatedAt: now,
-  };
+  favorite: false,
+
+  createdAt: now,
+  updatedAt: now,
+
+  lastOpened: undefined,
+
+  gitBranch: undefined,
+  gitDirty: false,
+};
 }

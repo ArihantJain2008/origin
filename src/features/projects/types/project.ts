@@ -13,5 +13,8 @@ export interface Project {
   updatedAt: string;
 
   lastOpened?: string;
+
+  gitBranch?: string;
+  gitDirty: boolean;
 }
 

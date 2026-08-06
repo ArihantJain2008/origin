@@ -1,4 +1,9 @@
-import { FolderOpen, Star } from "lucide-react";
+import {
+  FolderOpen,
+  Star,
+  GitBranch,
+  Circle,
+} from "lucide-react";
 import { confirm } from "@tauri-apps/plugin-dialog";
 
 import { Project } from "../types/project";
@@ -70,6 +75,34 @@ export default function ProjectCard({ project }: Props) {
               {project.metadata.framework} •{" "}
               {project.metadata.language}
             </p>
+
+            {project.gitBranch ? (
+  <div className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
+    <GitBranch size={14} />
+
+    <span>{project.gitBranch}</span>
+
+    <Circle
+      size={10}
+      fill={project.gitDirty ? "#f59e0b" : "#22c55e"}
+      className={
+        project.gitDirty
+          ? "text-amber-500"
+          : "text-green-500"
+      }
+    />
+
+    <span>
+      {project.gitDirty
+        ? "Modified"
+        : "Clean"}
+    </span>
+  </div>
+) : (
+  <p className="mt-2 text-sm text-zinc-500">
+    Not a Git repository
+  </p>
+)}
 
             <p className="mt-1 text-sm text-zinc-500 break-all">
               {project.path}

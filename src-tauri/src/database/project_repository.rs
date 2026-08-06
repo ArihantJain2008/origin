@@ -77,6 +77,9 @@ pub fn load_projects(database: &Database) -> Result<Vec<ProjectDto>> {
                 created_at: row.get(6)?,
                 updated_at: row.get(7)?,
                 last_opened: row.get(8)?,
+                
+                git_branch: None,
+                git_dirty: false,
             })
         })?
         .collect::<Result<Vec<_>>>()?;
