@@ -1,22 +1,17 @@
 import { HTMLAttributes } from "react";
-import { cn } from "../../utils/cn";
+
+import { cn } from "@/lib/utils";
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {}
 
-export function Card({
-  children,
-  className,
-  ...props
-}: CardProps) {
+export function Card({ className, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-zinc-800 bg-zinc-900 p-8",
+        "rounded-[10px] border border-[var(--color-border-subtle)] bg-[var(--color-bg-elevated)] p-4",
         className
       )}
       {...props}
-    >
-      {children}
-    </div>
+    />
   );
 }

@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
-import { cn } from "../../utils/cn";
+
+import { cn } from "@/lib/utils";
 
 interface PageContainerProps {
   children: ReactNode;
@@ -13,7 +14,7 @@ export function PageContainer({
   return (
     <main
       className={cn(
-        "min-h-screen bg-zinc-950 text-zinc-50 flex items-center justify-center px-8",
+        "flex min-h-screen items-center justify-center bg-zinc-950 px-8 text-zinc-50",
         className
       )}
     >

@@ -1,10 +1,11 @@
-import {
-  FolderOpen,
-  Star,
-  GitBranch,
-  Circle,
-} from "lucide-react";
 import { confirm } from "@tauri-apps/plugin-dialog";
+import {
+  Circle,
+  Ellipsis,
+  FolderOpen,
+  GitBranch,
+  Star,
+} from "lucide-react";
 
 import { Project } from "../types/project";
 import {
@@ -16,160 +17,269 @@ import {
   updateProjectFavorite,
 } from "../services/projectApi";
 import { useProjectStore } from "../store/projectStore";
+import { Badge, Button, Card } from "@/shared/components/ui";
+import { cn } from "@/lib/utils";
 
 interface Props {
   project: Project;
+  view?: "grid" | "list";
 }
 
-export default function ProjectCard({ project }: Props) {
+export default function ProjectCard({
+  project,
+  view = "grid",
+}: Props) {
   const loadProjects = useProjectStore(
     (state) => state.loadProjects
   );
 
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-blue-500">
+  const handleOpenProject = async () => {
+    await launchProject(project.id, project.path);
+    await loadProjects();
+  };
 
-      <div className="flex justify-between items-start">
+  const handleToggleFavorite = async () => {
+    await updateProjectFavorite(
+      project.id,
+      !project.favorite
+    );
 
-        <div className="flex gap-4">
+    await loadProjects();
+  };
 
-          <FolderOpen
-            size={28}
-            className="mt-1 text-blue-400"
-          />
+  const handleRemoveProject = async () => {
+    const confirmed = await confirm(
+      `Remove "${project.name}" from Origin?\n\nThis won't delete any files. Origin will just stop tracking it.`,
+      {
+        title: "Remove this project?",
+        kind: "warning",
+        okLabel: "Remove",
+        cancelLabel: "Cancel",
+      }
+    );
 
-          <div>
+    if (!confirmed) {
+      return;
+    }
 
-            <div className="flex items-center gap-2">
+    await removeProject(project.id);
+    await loadProjects();
+  };
 
+  const gitTone = !project.gitBranch
+    ? "neutral"
+    : project.gitDirty
+      ? "warning"
+      : "success";
+
+  if (view === "list") {
+    return (
+      <Card className="p-0">
+        <div className="flex min-h-16 items-center gap-4 px-4 py-3">
+          <button
+            onClick={handleOpenProject}
+            className="min-w-0 flex-1 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <FolderOpen
+                size={16}
+                className="text-[var(--color-text-tertiary)]"
+              />
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-3">
+                  <span className="truncate text-[15px] font-medium text-[var(--color-text-primary)]">
+                    {project.name}
+                  </span>
+
+                  <span className="truncate font-mono text-[12px] text-[var(--color-text-tertiary)]">
+                    {project.gitBranch ?? "No git"}
+                  </span>
+                </div>
+
+                <div className="mt-1 flex items-center gap-3 text-[12px] text-[var(--color-text-secondary)]">
+                  <span className="truncate">
+                    {project.path}
+                  </span>
+
+                  <span>
+                    {project.metadata.framework} · {project.metadata.language}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </button>
+
+          <Badge tone={gitTone}>
+            {project.gitDirty
+              ? "Modified"
+              : project.gitBranch
+                ? "Clean"
+                : "No git"}
+          </Badge>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleToggleFavorite}
+          >
+            <Star
+              size={14}
+              fill={project.favorite ? "currentColor" : "none"}
+              className={
+                project.favorite
+                  ? "text-[var(--color-accent)]"
+                  : "text-[var(--color-text-tertiary)]"
+              }
+            />
+          </Button>
+
+          <details className="relative">
+            <summary className="flex h-7 w-7 cursor-pointer list-none items-center justify-center rounded-[8px] text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]">
+              <Ellipsis size={14} />
+            </summary>
+
+            <div className="absolute right-0 top-9 z-20 min-w-40 rounded-[8px] border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-1 shadow-[var(--shadow-float)]">
               <button
-                onClick={async () => {
-                  await updateProjectFavorite(
-                    project.id,
-                    !project.favorite
-                  );
-
-                  await loadProjects();
-                }}
-                className="transition hover:scale-110"
+                className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
+                onClick={handleOpenProject}
               >
-                <Star
-                  size={18}
-                  fill={
-                    project.favorite
-                      ? "currentColor"
-                      : "none"
-                  }
-                  className={
-                    project.favorite
-                      ? "text-yellow-400"
-                      : "text-zinc-500"
-                  }
-                />
+                Open project
               </button>
 
-              <h3 className="font-semibold text-lg">
+              <button
+                className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
+                onClick={() => revealProject(project.path)}
+              >
+                Reveal in Explorer
+              </button>
+
+              <button
+                className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] text-[var(--color-danger)] hover:bg-[var(--color-bg-hover)]"
+                onClick={handleRemoveProject}
+              >
+                Remove project
+              </button>
+            </div>
+          </details>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="overflow-visible p-4 transition duration-100 hover:border-[var(--color-border-default)]">
+      <button
+        onClick={handleOpenProject}
+        className="block w-full text-left"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <Circle
+                size={8}
+                fill="currentColor"
+                className="text-[var(--color-accent)]"
+              />
+
+              <h3 className="truncate text-[15px] font-medium text-[var(--color-text-primary)]">
                 {project.name}
               </h3>
-
             </div>
 
-            <p className="text-sm text-blue-400">
-              {project.metadata.framework} •{" "}
-              {project.metadata.language}
+            <p className="mt-1 truncate text-[12px] text-[var(--color-text-tertiary)]">
+              {project.metadata.framework} · {project.metadata.language}
             </p>
-
-            {project.gitBranch ? (
-  <div className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
-    <GitBranch size={14} />
-
-    <span>{project.gitBranch}</span>
-
-    <Circle
-      size={10}
-      fill={project.gitDirty ? "#f59e0b" : "#22c55e"}
-      className={
-        project.gitDirty
-          ? "text-amber-500"
-          : "text-green-500"
-      }
-    />
-
-    <span>
-      {project.gitDirty
-        ? "Modified"
-        : "Clean"}
-    </span>
-  </div>
-) : (
-  <p className="mt-2 text-sm text-zinc-500">
-    Not a Git repository
-  </p>
-)}
-
-            <p className="mt-1 text-sm text-zinc-500 break-all">
-              {project.path}
-            </p>
-
           </div>
 
+          <div className="flex items-center gap-1">
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                void handleToggleFavorite();
+              }}
+              className="flex h-7 w-7 items-center justify-center rounded-[8px] text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-accent)]"
+              aria-label={
+                project.favorite
+                  ? "Unfavorite project"
+                  : "Favorite project"
+              }
+            >
+              <Star
+                size={15}
+                fill={project.favorite ? "currentColor" : "none"}
+                className={
+                  project.favorite
+                    ? "text-[var(--color-accent)]"
+                    : ""
+                }
+              />
+            </button>
+
+            <details
+              className="relative"
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              <summary className="flex h-7 w-7 list-none items-center justify-center rounded-[8px] text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]">
+                <Ellipsis size={15} />
+              </summary>
+
+              <div className="absolute right-0 top-9 z-20 min-w-40 rounded-[8px] border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-1 shadow-[var(--shadow-float)]">
+                <button
+                  className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
+                  onClick={handleOpenProject}
+                >
+                  Open project
+                </button>
+
+                <button
+                  className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
+                  onClick={() => revealProject(project.path)}
+                >
+                  Reveal in Explorer
+                </button>
+
+                <button
+                  className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] text-[var(--color-danger)] hover:bg-[var(--color-bg-hover)]"
+                  onClick={handleRemoveProject}
+                >
+                  Remove project
+                </button>
+              </div>
+            </details>
+          </div>
         </div>
 
-      </div>
+        <div className="mt-5 flex items-center gap-2">
+          <GitBranch
+            size={14}
+            className="text-[var(--color-text-tertiary)]"
+          />
 
-      <div className="mt-5 flex gap-3">
+          <span className="font-mono text-[12px] text-[var(--color-text-secondary)]">
+            {project.gitBranch ?? "No git"}
+          </span>
 
-        <button
-          onClick={async () => {
-            await launchProject(
-              project.id,
-              project.path
-            );
+          <Badge tone={gitTone}>
+            {project.gitDirty
+              ? "Modified"
+              : project.gitBranch
+                ? "Clean"
+                : "No git"}
+          </Badge>
+        </div>
 
-            await loadProjects();
-          }}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-500"
+        <p
+          className={cn(
+            "mt-3 line-clamp-2 text-[12px] text-[var(--color-text-tertiary)]",
+            view === "grid" ? "min-h-9" : ""
+          )}
         >
-          Open
-        </button>
-
-        <button
-  onClick={() =>
-    revealProject(project.path)
-  }
-  className="rounded-lg bg-zinc-700 px-4 py-2 text-white transition hover:bg-zinc-600"
->
-  Reveal
-</button>
-
-        <button
-          onClick={async () => {
-            const confirmed = await confirm(
-              `Remove "${project.name}" from Origin?\n\nYour project files will NOT be deleted.`,
-              {
-                title: "Remove Project",
-                kind: "warning",
-                okLabel: "Remove",
-                cancelLabel: "Cancel",
-              }
-            );
-
-            if (!confirmed) return;
-
-            try {
-              await removeProject(project.id);
-              await loadProjects();
-            } catch (error) {
-              console.error(error);
-            }
-          }}
-          className="rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-500"
-        >
-          Remove
-        </button>
-
-      </div>
-
-    </div>
+          {project.path}
+        </p>
+      </button>
+    </Card>
   );
 }
