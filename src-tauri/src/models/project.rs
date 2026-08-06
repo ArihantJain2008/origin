@@ -13,4 +13,6 @@ pub struct ProjectDto {
 
     pub created_at: String,
     pub updated_at: String,
+
+    pub last_opened: Option<String>,
 }

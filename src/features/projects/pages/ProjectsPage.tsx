@@ -7,7 +7,6 @@ import { useEffect } from "react";
 
 export default function ProjectsPage() {
   const projects = useProjectStore((state) => state.projects);
-  const addProject = useProjectStore((state) => state.addProject);
   const loadProjects = useProjectStore((state) => state.loadProjects);
 
 useEffect(() => {
@@ -30,7 +29,7 @@ useEffect(() => {
   const project = await createProject(folder);
 
   await saveProject(project);
-  addProject(project);
+  await loadProjects();
 };
 
   return (

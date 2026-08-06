@@ -1,12 +1,17 @@
 import { FolderOpen } from "lucide-react";
 import { Project } from "../types/project";
 import { launchProject } from "@/features/workspace/services/launcher";
+import { useProjectStore } from "../store/projectStore";
 
 interface Props {
   project: Project;
 }
 
 export default function ProjectCard({ project }: Props) {
+  const loadProjects = useProjectStore(
+    (state) => state.loadProjects
+  );
+
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-blue-500">
       <div className="flex items-center gap-3">
@@ -22,7 +27,10 @@ export default function ProjectCard({ project }: Props) {
           <p className="text-sm text-zinc-500">{project.path}</p>
 
           <button
-  onClick={() => launchProject(project.path)}
+  onClick={async () => {
+    await launchProject(project.id, project.path);
+    await loadProjects();
+  }}
 >
   Open
 </button>

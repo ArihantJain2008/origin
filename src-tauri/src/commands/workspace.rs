@@ -1,15 +1,19 @@
-use std::process::Command;
+use tauri::State;
+
+use crate::{
+    database::database::Database,
+    services::workspace_service,
+};
 
 #[tauri::command]
-pub fn launch_project(path: String) -> Result<(), String> {
-    Command::new("cmd")
-        .args([
-            "/C",
-            "code",
-            &path,
-        ])
-        .spawn()
-        .map_err(|e| e.to_string())?;
-
-    Ok(())
+pub fn launch_project(
+    database: State<'_, Database>,
+    id: String,
+    path: String,
+) -> Result<(), String> {
+    workspace_service::launch_project(
+        &database,
+        id,
+        path,
+    )
 }
