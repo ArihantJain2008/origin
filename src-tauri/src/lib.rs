@@ -48,6 +48,7 @@ pub fn run() {
             commands::projects::save_project,
             commands::projects::load_projects,
             commands::projects::remove_project,
+            commands::projects::update_project_favorite,
             commands::settings::save_settings,
             commands::settings::load_settings,
         ])

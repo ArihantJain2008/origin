@@ -58,9 +58,10 @@ pub fn load_projects(database: &Database) -> Result<Vec<ProjectDto>> {
             last_opened
         FROM projects
         ORDER BY
-            last_opened IS NULL,
-            last_opened DESC,
-            updated_at DESC
+    favorite DESC,
+    last_opened IS NULL,
+    last_opened DESC,
+    updated_at DESC
         ",
     )?;
 
@@ -115,6 +116,25 @@ pub fn remove_project(
         WHERE id = ?1
         ",
         [id],
+    )?;
+
+    Ok(())
+}
+
+pub fn update_project_favorite(
+    database: &Database,
+    id: &str,
+    favorite: bool,
+) -> Result<()> {
+    let connection = database.connection();
+
+    connection.execute(
+        "
+        UPDATE projects
+        SET favorite = ?1
+        WHERE id = ?2
+        ",
+        (favorite, id),
     )?;
 
     Ok(())

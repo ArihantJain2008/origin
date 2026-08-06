@@ -21,3 +21,16 @@ pub fn remove_project(
     )
     .map_err(|e| e.to_string())
 }
+
+pub fn update_project_favorite(
+    database: &Database,
+    id: String,
+    favorite: bool,
+) -> Result<(), String> {
+    project_repository::update_project_favorite(
+        database,
+        &id,
+        favorite,
+    )
+    .map_err(|e| e.to_string())
+}

@@ -1,10 +1,13 @@
-import { FolderOpen } from "lucide-react";
+import { FolderOpen, Star } from "lucide-react";
+import { confirm } from "@tauri-apps/plugin-dialog";
+
 import { Project } from "../types/project";
 import { launchProject } from "@/features/workspace/services/launcher";
+import {
+  removeProject,
+  updateProjectFavorite,
+} from "../services/projectApi";
 import { useProjectStore } from "../store/projectStore";
-import { removeProject } from "../services/projectApi";
-import { confirm } from "@tauri-apps/plugin-dialog";
-import ProjectMenu from "./ProjectMenu";
 
 interface Props {
   project: Project;
@@ -15,57 +18,113 @@ export default function ProjectCard({ project }: Props) {
     (state) => state.loadProjects
   );
 
-
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-blue-500">
-      <div className="flex items-start justify-between">
-        <FolderOpen className="text-blue-400" />
 
-        <div>
-          <h3 className="font-semibold">{project.name}</h3>
+      <div className="flex justify-between items-start">
 
-          <p className="text-sm text-blue-400">
-            {project.metadata.framework} • {project.metadata.language}
-          </p>
+        <div className="flex gap-4">
 
-          <p className="text-sm text-zinc-500">{project.path}</p>
+          <FolderOpen
+            size={28}
+            className="mt-1 text-blue-400"
+          />
 
-          <button
-  onClick={async () => {
-    await launchProject(project.id, project.path);
-    await loadProjects();
-  }}
->
-  Open
-</button>
+          <div>
 
-<button
-  onClick={async () => {
-  const confirmed = await confirm(
-    `Remove "${project.name}" from Origin?\n\nYour project files will NOT be deleted.`,
-    {
-      title: "Remove Project",
-      kind: "warning",
-      okLabel: "Remove",
-      cancelLabel: "Cancel",
-    }
-  );
+            <div className="flex items-center gap-2">
 
-  if (!confirmed) return;
+              <button
+                onClick={async () => {
+                  await updateProjectFavorite(
+                    project.id,
+                    !project.favorite
+                  );
 
-  try {
-    await removeProject(project.id);
-    await loadProjects();
-  } catch (error) {
-    console.error(error);
-  }
-}}
-  className="rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-500"
->
-  Remove
-</button>
+                  await loadProjects();
+                }}
+                className="transition hover:scale-110"
+              >
+                <Star
+                  size={18}
+                  fill={
+                    project.favorite
+                      ? "currentColor"
+                      : "none"
+                  }
+                  className={
+                    project.favorite
+                      ? "text-yellow-400"
+                      : "text-zinc-500"
+                  }
+                />
+              </button>
+
+              <h3 className="font-semibold text-lg">
+                {project.name}
+              </h3>
+
+            </div>
+
+            <p className="text-sm text-blue-400">
+              {project.metadata.framework} •{" "}
+              {project.metadata.language}
+            </p>
+
+            <p className="mt-1 text-sm text-zinc-500 break-all">
+              {project.path}
+            </p>
+
+          </div>
+
         </div>
+
       </div>
+
+      <div className="mt-5 flex gap-3">
+
+        <button
+          onClick={async () => {
+            await launchProject(
+              project.id,
+              project.path
+            );
+
+            await loadProjects();
+          }}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-500"
+        >
+          Open
+        </button>
+
+        <button
+          onClick={async () => {
+            const confirmed = await confirm(
+              `Remove "${project.name}" from Origin?\n\nYour project files will NOT be deleted.`,
+              {
+                title: "Remove Project",
+                kind: "warning",
+                okLabel: "Remove",
+                cancelLabel: "Cancel",
+              }
+            );
+
+            if (!confirmed) return;
+
+            try {
+              await removeProject(project.id);
+              await loadProjects();
+            } catch (error) {
+              console.error(error);
+            }
+          }}
+          className="rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-500"
+        >
+          Remove
+        </button>
+
+      </div>
+
     </div>
   );
 }

@@ -22,3 +22,16 @@ pub fn remove_project(
         id,
     )
 }
+
+#[tauri::command]
+pub fn update_project_favorite(
+    database: State<'_, Database>,
+    id: String,
+    favorite: bool,
+) -> Result<(), String> {
+    project_service::update_project_favorite(
+        &database,
+        id,
+        favorite,
+    )
+}

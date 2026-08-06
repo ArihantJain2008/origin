@@ -32,3 +32,13 @@ export async function removeProject(id: string) {
     id,
   });
 }
+
+export async function updateProjectFavorite(
+  id: string,
+  favorite: boolean
+) {
+  await invoke("update_project_favorite", {
+    id,
+    favorite,
+  });
+}
