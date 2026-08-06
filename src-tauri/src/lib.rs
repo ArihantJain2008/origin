@@ -22,18 +22,13 @@ pub fn run() {
                 .app_data_dir()
                 .expect("Failed to resolve app data directory");
 
-            std::fs::create_dir_all(&app_data_dir)
-                .expect("Failed to create app data directory");
+            std::fs::create_dir_all(&app_data_dir).expect("Failed to create app data directory");
 
             let database_path = app_data_dir.join("origin.db");
 
-            println!(
-                "Opening database at {}",
-                database_path.display()
-            );
+            println!("Opening database at {}", database_path.display());
 
-            let database = Database::new(&database_path)
-                .expect("Failed to open database");
+            let database = Database::new(&database_path).expect("Failed to open database");
 
             database
                 .initialize()

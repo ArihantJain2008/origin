@@ -7,18 +7,16 @@ pub struct Database {
 }
 impl Database {
     pub fn new(path: impl AsRef<Path>) -> Result<Self> {
-    let connection = Connection::open(path)?;
+        let connection = Connection::open(path)?;
 
-    Ok(Self {
-        connection: Mutex::new(connection),
-    })
-}
+        Ok(Self {
+            connection: Mutex::new(connection),
+        })
+    }
 
-    pub fn connection(
-    &self,
-) -> std::sync::MutexGuard<'_, Connection> {
-    self.connection.lock().unwrap()
-}
+    pub fn connection(&self) -> std::sync::MutexGuard<'_, Connection> {
+        self.connection.lock().unwrap()
+    }
 
     pub fn initialize(&self) -> Result<()> {
         let connection = self.connection.lock().unwrap();

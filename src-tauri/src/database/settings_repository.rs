@@ -2,11 +2,7 @@ use rusqlite::Result;
 
 use crate::database::database::Database;
 
-pub fn save_setting(
-    database: &Database,
-    key: &str,
-    value: &str,
-) -> Result<()> {
+pub fn save_setting(database: &Database, key: &str, value: &str) -> Result<()> {
     let connection = database.connection();
 
     connection.execute(
@@ -21,10 +17,7 @@ pub fn save_setting(
     Ok(())
 }
 
-pub fn load_setting(
-    database: &Database,
-    key: &str,
-) -> Result<Option<String>> {
+pub fn load_setting(database: &Database, key: &str) -> Result<Option<String>> {
     let connection = database.connection();
 
     let mut statement = connection.prepare(
