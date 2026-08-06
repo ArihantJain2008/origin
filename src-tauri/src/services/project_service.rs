@@ -17,3 +17,11 @@ pub fn save_project(
     )
     .map_err(|e| e.to_string())
 }
+
+pub fn load_projects(
+    database: &Database,
+) -> Result<Vec<ProjectDto>, String> {
+
+    project_repository::load_projects(database)
+        .map_err(|e| e.to_string())
+}

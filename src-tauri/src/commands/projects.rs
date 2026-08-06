@@ -17,3 +17,10 @@ pub fn save_project(
         project,
     )
 }
+
+#[tauri::command]
+pub fn load_projects(
+    database: State<'_, Database>,
+) -> Result<Vec<ProjectDto>, String> {
+    project_service::load_projects(&database)
+}

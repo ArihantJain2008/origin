@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { Project } from "../types/project";
+import { loadProjects as loadProjectsFromApi } from "../services/projectApi";
 
 interface ProjectStore {
   projects: Project[];
@@ -9,6 +10,8 @@ interface ProjectStore {
   removeProject: (id: string) => void;
 
   updateProject: (project: Project) => void;
+
+  loadProjects: () => Promise<void>;
 }
 
 export const useProjectStore = create<ProjectStore>((set) => ({
@@ -30,4 +33,13 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         p.id === project.id ? project : p
       ),
     })),
+
+    loadProjects: async () => {
+  const projects = await loadProjectsFromApi();
+
+  set({
+    projects,
+  });
+},
+
 }));

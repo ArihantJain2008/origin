@@ -3,10 +3,24 @@ import { useProjectStore } from "@/features/projects/store/projectStore";
 import { pickProjectFolder } from "@/features/projects/services/dialog";
 import { createProject } from "@/features/projects/services/projectFactory";
 import { saveProject } from "@/features/projects/services/projectApi";
+import { useEffect } from "react";
 
 export default function ProjectsPage() {
   const projects = useProjectStore((state) => state.projects);
   const addProject = useProjectStore((state) => state.addProject);
+  const loadProjects = useProjectStore((state) => state.loadProjects);
+
+useEffect(() => {
+  const initialize = async () => {
+    try {
+      await loadProjects();
+    } catch (error) {
+      console.error("Failed to load projects:", error);
+    }
+  };
+
+  initialize();
+}, [loadProjects]);
 
   const handleAddProject = async () => {
   const folder = await pickProjectFolder();
@@ -15,8 +29,8 @@ export default function ProjectsPage() {
 
   const project = await createProject(folder);
 
-  addProject(project);
   await saveProject(project);
+  addProject(project);
 };
 
   return (

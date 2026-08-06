@@ -1,5 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
 import { Project } from "../types/project";
+import {
+  mapProjectDto,
+  ProjectDto,
+} from "../mappers/projectMapper";
+
 
 export async function saveProject(project: Project) {
   await invoke("save_project", {
@@ -14,4 +19,10 @@ export async function saveProject(project: Project) {
     updated_at: project.updatedAt,
   },
 });
+}
+
+export async function loadProjects(): Promise<Project[]> {
+  const projects = await invoke<ProjectDto[]>("load_projects");
+
+  return projects.map(mapProjectDto);
 }

@@ -41,3 +41,43 @@ pub fn save_project(
 
     Ok(())
 }
+
+pub fn load_projects(
+    database: &Database,
+) -> Result<Vec<ProjectDto>> {
+
+    let connection = database.connection();
+
+    let mut statement = connection.prepare(
+        "
+        SELECT
+            id,
+            name,
+            path,
+            framework,
+            language,
+            favorite,
+            created_at,
+            updated_at
+        FROM projects
+        ORDER BY updated_at DESC
+        ",
+    )?;
+
+    let projects = statement
+        .query_map([], |row| {
+            Ok(ProjectDto {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                path: row.get(2)?,
+                framework: row.get(3)?,
+                language: row.get(4)?,
+                favorite: row.get(5)?,
+                created_at: row.get(6)?,
+                updated_at: row.get(7)?,
+            })
+        })?
+        .collect::<Result<Vec<_>>>()?;
+
+    Ok(projects)
+}
