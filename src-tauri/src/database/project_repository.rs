@@ -102,3 +102,20 @@ pub fn update_project_last_opened(database: &Database, id: &str) -> Result<()> {
 
     Ok(())
 }
+
+pub fn remove_project(
+    database: &Database,
+    id: &str,
+) -> Result<()> {
+    let connection = database.connection();
+
+    connection.execute(
+        "
+        DELETE FROM projects
+        WHERE id = ?1
+        ",
+        [id],
+    )?;
+
+    Ok(())
+}

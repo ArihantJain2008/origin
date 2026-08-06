@@ -47,6 +47,7 @@ pub fn run() {
             commands::workspace::launch_project,
             commands::projects::save_project,
             commands::projects::load_projects,
+            commands::projects::remove_project,
             commands::settings::save_settings,
             commands::settings::load_settings,
         ])

@@ -26,3 +26,9 @@ export async function loadProjects(): Promise<Project[]> {
 
   return projects.map(mapProjectDto);
 }
+
+export async function removeProject(id: string) {
+  await invoke("remove_project", {
+    id,
+  });
+}

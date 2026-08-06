@@ -10,3 +10,14 @@ pub fn save_project(database: &Database, project: ProjectDto) -> Result<(), Stri
 pub fn load_projects(database: &Database) -> Result<Vec<ProjectDto>, String> {
     project_repository::load_projects(database).map_err(|e| e.to_string())
 }
+
+pub fn remove_project(
+    database: &Database,
+    id: String,
+) -> Result<(), String> {
+    project_repository::remove_project(
+        database,
+        &id,
+    )
+    .map_err(|e| e.to_string())
+}
