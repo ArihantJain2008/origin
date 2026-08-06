@@ -5,6 +5,8 @@ import { loadProjects as loadProjectsFromApi } from "../services/projectApi";
 interface ProjectStore {
   projects: Project[];
 
+  searchQuery: string;
+
   addProject: (project: Project) => void;
 
   removeProject: (id: string) => void;
@@ -12,10 +14,14 @@ interface ProjectStore {
   updateProject: (project: Project) => void;
 
   loadProjects: () => Promise<void>;
+
+  setSearchQuery: (query: string) => void;
 }
 
 export const useProjectStore = create<ProjectStore>((set) => ({
   projects: [],
+
+  searchQuery: "",
 
   addProject: (project) =>
     set((state) => ({
@@ -34,12 +40,16 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       ),
     })),
 
-    loadProjects: async () => {
-  const projects = await loadProjectsFromApi();
+  loadProjects: async () => {
+    const projects = await loadProjectsFromApi();
 
-  set({
-    projects,
-  });
-},
+    set({
+      projects,
+    });
+  },
 
+  setSearchQuery: (query) =>
+    set({
+      searchQuery: query,
+    }),
 }));
