@@ -7,7 +7,10 @@ import {
 import { confirm } from "@tauri-apps/plugin-dialog";
 
 import { Project } from "../types/project";
-import { launchProject } from "@/features/workspace/services/launcher";
+import {
+  launchProject,
+  revealProject,
+} from "@/features/workspace/services/launcher";
 import {
   removeProject,
   updateProjectFavorite,
@@ -129,6 +132,15 @@ export default function ProjectCard({ project }: Props) {
         >
           Open
         </button>
+
+        <button
+  onClick={() =>
+    revealProject(project.path)
+  }
+  className="rounded-lg bg-zinc-700 px-4 py-2 text-white transition hover:bg-zinc-600"
+>
+  Reveal
+</button>
 
         <button
           onClick={async () => {

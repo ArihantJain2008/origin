@@ -45,6 +45,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             commands::workspace::launch_project,
+            commands::workspace::reveal_project,
             commands::projects::save_project,
             commands::projects::load_projects,
             commands::projects::remove_project,
