@@ -15,3 +15,16 @@ pub fn load_settings(database: &Database) -> Result<SettingsDto, String> {
 
     Ok(SettingsDto { preferred_editor })
 }
+
+pub fn get_preferred_editor(
+    database: &Database,
+) -> Result<String, String> {
+    settings_repository::load_setting(
+        database,
+        "preferred_editor",
+    )
+    .map_err(|e| e.to_string())
+    .map(|editor| {
+        editor.unwrap_or_else(|| "vscode".to_string())
+    })
+}

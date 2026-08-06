@@ -1,2 +1,4 @@
 export type Editor =
-  | "vscode";
+  | "vscode"
+  | "cursor"
+  | "windsurf";

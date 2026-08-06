@@ -34,23 +34,16 @@ useEffect(() => {
         </label>
 
         <select
-          value={settings.preferredEditor}
-          onChange={(e) =>
-            setPreferredEditor(e.target.value as any)
-          }
-          className="w-full rounded-lg bg-zinc-800 p-3"
-        >
-          <option value="vscode">
-            VS Code
-          </option>
-          <option value="cursor">
-  Cursor
-</option>
-
-<option value="windsurf">
-  Windsurf
-</option>
-        </select>
+  value={settings.preferredEditor}
+  onChange={(e) =>
+    setPreferredEditor(e.target.value as any)
+  }
+  className="w-full rounded-lg bg-zinc-800 p-3"
+>
+  <option value="vscode">VS Code</option>
+  <option value="cursor">Cursor</option>
+  <option value="windsurf">Windsurf</option>
+</select>
       </div>
     </div>
   );
