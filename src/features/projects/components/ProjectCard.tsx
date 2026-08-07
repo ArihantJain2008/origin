@@ -43,6 +43,7 @@ export default function ProjectCard({
 // console.log("Dependencies:", analysis?.dependencies);
 // console.log(project.name);
 // console.log(analysis?.todos);
+// console.log("Readme:", analysis?.readme);
 
   const handleOpenProject = async () => {
     await launchProject(project.id, project.path);
@@ -201,6 +202,12 @@ export default function ProjectCard({
             <p className="mt-1 truncate text-[12px] text-[var(--color-text-tertiary)]">
               {project.metadata.framework} · {project.metadata.language}
             </p>
+
+            {analysis?.readme.description && (
+  <p className="mt-2 line-clamp-2 text-[13px] text-[var(--color-text-secondary)]">
+    {analysis.readme.description}
+  </p>
+)}
           </div>
 
           <div className="flex items-center gap-1">

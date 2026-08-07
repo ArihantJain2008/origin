@@ -5,7 +5,13 @@ export interface TodoItem {
   text: string;
 }
 
+export interface ReadmeInfo {
+    title: string | null;
+    description: string | null;
+}
+
 export interface AnalysisDto {
   todos: TodoItem[];
   dependencies: string[];
+  readme: ReadmeInfo;
 }
