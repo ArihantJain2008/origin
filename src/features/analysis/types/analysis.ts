@@ -15,9 +15,15 @@ export interface AnalysisDto {
   dependencies: string[];
   readme: ReadmeInfo;
   stats: StatsInfo;
+  health: HealthInfo;
 }
 
 export interface StatsInfo {
   files: number;
   lines: number;
+}
+
+export interface HealthInfo {
+  score: number;
+  rating: string;
 }

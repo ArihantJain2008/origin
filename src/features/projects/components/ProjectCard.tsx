@@ -48,6 +48,7 @@ export default function ProjectCard({
 // console.log(analysis?.todos);
 // console.log("Readme:", analysis?.readme);
 // console.log(analysis?.stats);
+// console.log("Health:", analysis?.health);
 
   const handleOpenProject = async () => {
     await launchProject(project.id, project.path);
@@ -225,6 +226,22 @@ export default function ProjectCard({
   <p className="mt-2 line-clamp-2 text-[13px] text-[var(--color-text-secondary)]">
     {analysis.readme.description}
   </p>
+)}
+
+{analysis && (
+  <Badge
+    tone={
+      analysis.health.score >= 90
+        ? "success"
+        : analysis.health.score >= 75
+        ? "warning"
+        : analysis.health.score >= 50
+        ? "neutral"
+        : "danger"
+    }
+  >
+    {analysis.health.rating} • {analysis.health.score}%
+  </Badge>
 )}
           </div>
 

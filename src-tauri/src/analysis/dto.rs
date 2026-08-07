@@ -21,9 +21,16 @@ pub struct StatsInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct HealthInfo {
+    pub score: u32,
+    pub rating: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AnalysisDto {
     pub todos: Vec<TodoItem>,
     pub dependencies: Vec<String>,
     pub readme: ReadmeInfo,
     pub stats: StatsInfo,
+    pub health: HealthInfo,
 }

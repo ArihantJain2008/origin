@@ -3,7 +3,8 @@ use crate::analysis::{
     dto::AnalysisDto,
     todo_analyzer,
     readme_analyzer,
-    stats_analyzer
+    stats_analyzer,
+    health_analyzer,
 };
 
 pub fn scan(path: &str) -> Result<AnalysisDto, String> {
@@ -11,11 +12,21 @@ pub fn scan(path: &str) -> Result<AnalysisDto, String> {
     let dependencies = dependency_analyzer::scan(path);
     let readme = readme_analyzer::scan(path);
     let stats = stats_analyzer::scan(path);
+    let has_git = std::path::Path::new(path).join(".git").exists();
+    
+    let health = health_analyzer::calculate(
+        &todos,
+        &dependencies,
+        &readme,
+        &stats,
+        has_git,
+    );
 
     Ok(AnalysisDto {
         todos,
         dependencies,
         readme,
         stats,
+        health,
     })
 }
