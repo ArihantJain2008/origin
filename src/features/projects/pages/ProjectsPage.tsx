@@ -4,8 +4,6 @@ import {
   Plus,
   Search,
 } from "lucide-react";
-import { useEffect } from "react";
-import { useAnalysisStore } from "@/features/analysis/store/analysisStore";
 import ProjectCard from "@/features/projects/components/ProjectCard";
 import { pickProjectFolder } from "@/features/projects/services/dialog";
 import { createProject } from "@/features/projects/services/projectFactory";
@@ -14,49 +12,46 @@ import { useProjectStore } from "@/features/projects/store/projectStore";
 import { Button, Input } from "@/shared/components/ui";
 import { useUiPreferencesStore } from "@/shared/store/uiPreferencesStore";
 import { sortProjectsByRecent } from "@/shared/utils/projectFormatting";
+import { refreshApplicationState } from "@/features/app/coordinator/appCoordinator";
 
 export default function ProjectsPage() {
   const projects = useProjectStore((state) => state.projects);
-  const loadProjects = useProjectStore((state) => state.loadProjects);
-  const searchQuery = useProjectStore((state) => state.searchQuery);
-  const setSearchQuery = useProjectStore((state) => state.setSearchQuery);
-  const projectView = useUiPreferencesStore((state) => state.projectView);
-  const setProjectView = useUiPreferencesStore((state) => state.setProjectView);
-  const analyze = useAnalysisStore((state) => state.analyze);
-  const analysis = useAnalysisStore((state) => state.analysis);
-  
 
-  // Load projects
-useEffect(() => {
-  loadProjects().catch((error) => {
-    console.error(error);
-  });
-}, [loadProjects]);
+  const searchQuery = useProjectStore(
+    (state) => state.searchQuery
+  );
 
-// Analyze projects once
-useEffect(() => {
-  if (projects.length === 0) {
-    return;
-  }
+  const setSearchQuery = useProjectStore(
+    (state) => state.setSearchQuery
+  );
 
-  projects.forEach((project) => {
-    if (!analysis[project.id]) {
-      void analyze(project.id, project.path);
+  const projectView = useUiPreferencesStore(
+    (state) => state.projectView
+  );
+
+  const setProjectView = useUiPreferencesStore(
+    (state) => state.setProjectView
+  );
+
+  const filteredProjects = sortProjectsByRecent(projects).filter(
+    (project) => {
+      const query = searchQuery.toLowerCase();
+
+      return (
+        project.name.toLowerCase().includes(query) ||
+        project.path.toLowerCase().includes(query) ||
+        project.metadata.framework
+          .toLowerCase()
+          .includes(query) ||
+        project.metadata.language
+          .toLowerCase()
+          .includes(query) ||
+        project.gitBranch
+          ?.toLowerCase()
+          .includes(query)
+      );
     }
-  });
-}, [projects, analysis, analyze]);
-
-  const filteredProjects = sortProjectsByRecent(projects).filter((project) => {
-    const query = searchQuery.toLowerCase();
-
-    return (
-      project.name.toLowerCase().includes(query) ||
-      project.path.toLowerCase().includes(query) ||
-      project.metadata.framework.toLowerCase().includes(query) ||
-      project.metadata.language.toLowerCase().includes(query) ||
-      project.gitBranch?.toLowerCase().includes(query)
-    );
-  });
+  );
 
   const handleAddProject = async () => {
     const folder = await pickProjectFolder();
@@ -66,10 +61,11 @@ useEffect(() => {
     }
 
     const project = await createProject(folder);
-    await saveProject(project);
-    await loadProjects();
-  };
 
+    await saveProject(project);
+
+    await refreshApplicationState();
+  };
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
       <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

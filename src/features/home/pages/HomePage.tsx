@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowRight,
   Clock3,
@@ -13,6 +13,10 @@ import { useNavigate } from "react-router-dom";
 import { useProjectStore } from "@/features/projects/store/projectStore";
 import { launchProject } from "@/features/workspace/services/launcher";
 import { Badge, Button, Card, Input } from "@/shared/components/ui";
+import SummaryCards from "@/features/dashboard/components/SummaryCards";
+import InsightsPanel from "@/features/dashboard/components/InsightsPanel";
+import { useAppStore } from "@/features/app/store/appStore";
+import { refreshApplicationState } from "@/features/app/coordinator/appCoordinator";
 import {
   formatRelativeDate,
   getProjectStatusLabel,
@@ -21,15 +25,15 @@ import {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const projects = useProjectStore((state) => state.projects);
-  const loadProjects = useProjectStore((state) => state.loadProjects);
-  const [query, setQuery] = useState("");
 
-  useEffect(() => {
-    loadProjects().catch((error) => {
-      console.error("Failed to load projects:", error);
-    });
-  }, [loadProjects]);
+  const projects = useProjectStore((state) => state.projects);
+
+  const ready = useAppStore((state) => state.ready);
+  const initializing = useAppStore(
+    (state) => state.initializing
+  );
+
+  const [query, setQuery] = useState("");
 
   const sortedProjects = useMemo(
     () => sortProjectsByRecent(projects),
@@ -37,9 +41,11 @@ export default function HomePage() {
   );
 
   const continueProject = sortedProjects[0];
+
   const pinnedProjects = sortedProjects
     .filter((project) => project.favorite)
     .slice(0, 4);
+
   const recentProjects = sortedProjects
     .filter((project) => project.id !== continueProject?.id)
     .slice(0, 6);
@@ -55,9 +61,15 @@ export default function HomePage() {
       return (
         project.name.toLowerCase().includes(normalized) ||
         project.path.toLowerCase().includes(normalized) ||
-        project.metadata.framework.toLowerCase().includes(normalized) ||
-        project.metadata.language.toLowerCase().includes(normalized) ||
-        project.gitBranch?.toLowerCase().includes(normalized)
+        project.metadata.framework
+          .toLowerCase()
+          .includes(normalized) ||
+        project.metadata.language
+          .toLowerCase()
+          .includes(normalized) ||
+        project.gitBranch
+          ?.toLowerCase()
+          .includes(normalized)
       );
     });
   }, [query, sortedProjects]);
@@ -80,24 +92,47 @@ export default function HomePage() {
     path: string
   ) => {
     await launchProject(projectId, path);
-    await loadProjects();
+    await refreshApplicationState();
   };
+
+  if (initializing || !ready) {
+    return (
+      <div className="flex h-[70vh] items-center justify-center">
+        <Card className="w-full max-w-md p-8 text-center">
+          <h2 className="text-xl font-semibold">
+            Preparing Workspace
+          </h2>
+
+          <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+            Loading your projects and analyzing your workspace...
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
-      <div className="mb-8 flex flex-col gap-3">
-        <p className="text-[12px] font-medium uppercase tracking-[0.02em] text-[var(--color-text-tertiary)]">
-          Dashboard
-        </p>
+      <div className="mb-8 space-y-6">
+        <div>
+          <p className="text-[12px] font-medium uppercase tracking-[0.02em] text-[var(--color-text-tertiary)]">
+            Dashboard
+          </p>
 
-        <h1 className="max-w-3xl text-[28px] font-bold leading-none tracking-tight text-[var(--color-text-primary)]">
-          Quiet, precise, and fast.
-        </h1>
+          <h1 className="mt-2 text-[28px] font-bold leading-none tracking-tight text-[var(--color-text-primary)]">
+            Quiet, precise, and fast.
+          </h1>
 
-        <p className="max-w-2xl text-[14px] text-[var(--color-text-secondary)]">
-          Origin should get you back into motion without asking for attention it hasn&apos;t earned.
-        </p>
+          <p className="mt-3 max-w-2xl text-[14px] text-[var(--color-text-secondary)]">
+            Origin should get you back into motion without asking for
+            attention it hasn&apos;t earned.
+          </p>
+        </div>
+
+        <SummaryCards />
       </div>
+
+      <InsightsPanel />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_260px]">
         <div className="space-y-6">

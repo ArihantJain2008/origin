@@ -53,3 +53,4 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       searchQuery: query,
     }),
 }));
+

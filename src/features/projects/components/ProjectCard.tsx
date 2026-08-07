@@ -20,11 +20,11 @@ import {
   removeProject,
   updateProjectFavorite,
 } from "../services/projectApi";
-import { useProjectStore } from "../store/projectStore";
 import { Badge, Button, Card } from "@/shared/components/ui";
 import { cn } from "@/lib/utils";
 import { useAnalysisStore } from "@/features/analysis/store/analysisStore";
 import { useEffect, useRef, useState } from "react";
+import { refreshApplicationState } from "@/features/app/coordinator/appCoordinator";
 
 interface Props {
   project: Project;
@@ -37,75 +37,76 @@ export default function ProjectCard({
   project,
   view = "grid",
 }: Props) {
-  const loadProjects = useProjectStore(
-    (state) => state.loadProjects
+  const loading = useAnalysisStore(
+    (state) => state.loading[project.id]
   );
 
   const analysis = useAnalysisStore(
   (state) => state.analysis[project.id]
 );
 
-useEffect(() => {
-  function handleClickOutside(event: MouseEvent) {
-    if (
-      menuRef.current &&
-      !menuRef.current.contains(event.target as Node)
-    ) {
-      setMenuOpen(false);
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
+        setMenuOpen(false);
+      }
     }
-  }
 
-  document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
 
-  return () => {
-    document.removeEventListener(
-      "mousedown",
-      handleClickOutside
-    );
-  };
-}, []);
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+  }, []);
 
-//  for checking if analysis is being fetched correctly
+/*
+======================================================
+DEBUG (Sprint 6 - Analysis Stabilization)
+Purpose:
+Inspect the analysis payload for one project while validating synchronization.
+Uncomment only while debugging.
+======================================================
 
-// console.log("Dependencies:", analysis?.dependencies);
-// console.log(project.name);
-// console.log(analysis?.todos);
-// console.log("Readme:", analysis?.readme);
-// console.log(analysis?.stats);
-// console.log("Health:", analysis?.health);a
+console.log("Dependencies:", analysis?.dependencies);
+console.log(project.name);
+console.log(analysis?.todos);
+console.log("Readme:", analysis?.readme);
+console.log("Stats:", analysis?.stats);
+console.log("Health:", analysis?.health);
+*/
 
   const handleOpenProject = async () => {
     await launchProject(project.id, project.path);
-    await loadProjects();
+    await refreshApplicationState();
   };
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const handleToggleFavorite = async () => {
     await updateProjectFavorite(
       project.id,
       !project.favorite
     );
-    await loadProjects();
+    await refreshApplicationState();
   };
 
-  const loading = useAnalysisStore(
-  (state) => state.loading[project.id]
-);
+  const analyze = useAnalysisStore((state) => state.analyze);
 
-const analyze = useAnalysisStore(
-  (state) => state.analyze
-);
+  const handleRefreshAnalysis = async (
+    event: React.MouseEvent
+  ) => {
+    event.stopPropagation();
 
-const handleRefreshAnalysis = async (
-  event: React.MouseEvent
-) => {
-  event.stopPropagation();
-
-  await analyze(project.id, project.path);
-};
+    await analyze(project.id, project.path);
+  };
   const handleRemoveProject = async () => {
     const confirmed = await confirm(
       `Remove "${project.name}" from Origin?\n\nThis won't delete any files. Origin will just stop tracking it.`,
@@ -122,7 +123,7 @@ const handleRefreshAnalysis = async (
     }
 
     await removeProject(project.id);
-    await loadProjects();
+    await refreshApplicationState();
   };
 
   const gitTone = !project.gitBranch
