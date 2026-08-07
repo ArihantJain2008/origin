@@ -15,8 +15,15 @@ pub struct ReadmeInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct StatsInfo {
+    pub files: u32,
+    pub lines: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AnalysisDto {
     pub todos: Vec<TodoItem>,
     pub dependencies: Vec<String>,
     pub readme: ReadmeInfo,
+    pub stats: StatsInfo,
 }

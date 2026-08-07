@@ -14,4 +14,10 @@ export interface AnalysisDto {
   todos: TodoItem[];
   dependencies: string[];
   readme: ReadmeInfo;
+  stats: StatsInfo;
+}
+
+export interface StatsInfo {
+  files: number;
+  lines: number;
 }

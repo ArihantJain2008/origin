@@ -2,9 +2,12 @@ import { confirm } from "@tauri-apps/plugin-dialog";
 import {
   Circle,
   Ellipsis,
+  FileText,
+  Files,
   FolderOpen,
   GitBranch,
   Star,
+  ListTodo
 } from "lucide-react";
 
 import { Project } from "../types/project";
@@ -44,6 +47,7 @@ export default function ProjectCard({
 // console.log(project.name);
 // console.log(analysis?.todos);
 // console.log("Readme:", analysis?.readme);
+// console.log(analysis?.stats);
 
   const handleOpenProject = async () => {
     await launchProject(project.id, project.path);
@@ -203,6 +207,20 @@ export default function ProjectCard({
               {project.metadata.framework} · {project.metadata.language}
             </p>
 
+           {analysis && (
+  <div className="mt-3 flex items-center gap-4 text-[12px] text-[var(--color-text-secondary)]">
+    <div className="flex items-center gap-1.5">
+      <Files size={14} />
+      <span>{analysis.stats.files.toLocaleString()} Files</span>
+    </div>
+
+    <div className="flex items-center gap-1.5">
+      <FileText size={14} />
+      <span>{analysis.stats.lines.toLocaleString()} Lines</span>
+    </div>
+  </div>
+)}
+
             {analysis?.readme.description && (
   <p className="mt-2 line-clamp-2 text-[13px] text-[var(--color-text-secondary)]">
     {analysis.readme.description}
@@ -291,10 +309,11 @@ export default function ProjectCard({
 
         {analysis && (
   <div className="mt-3 flex flex-wrap gap-2">
-    <Badge tone="neutral">
-      📝 {analysis.todos.length} TODO
-      {analysis.todos.length !== 1 ? "s" : ""}
-    </Badge>
+   <Badge tone="neutral">
+  <ListTodo size={12} className="mr-1" />
+  {analysis.todos.length} TODO
+  {analysis.todos.length !== 1 ? "s" : ""}
+</Badge>
 
     {analysis.dependencies
       .slice(0, 5)
