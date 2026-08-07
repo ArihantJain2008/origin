@@ -11,4 +11,5 @@ pub struct TodoItem {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AnalysisDto {
     pub todos: Vec<TodoItem>,
+    pub dependencies: Vec<String>,
 }

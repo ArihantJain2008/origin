@@ -1,6 +1,6 @@
 use crate::analysis::{
     dto::AnalysisDto,
-    todo_analyzer,
+    analyzer,
 };
 
 pub fn analyze_project(
@@ -8,7 +8,7 @@ pub fn analyze_project(
 ) -> Result<AnalysisDto, String> {
 
     let analysis =
-        todo_analyzer::scan(path)?;
+        analyzer::scan(path)?;
 
     Ok(analysis)
 }

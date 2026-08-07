@@ -7,4 +7,5 @@ export interface TodoItem {
 
 export interface AnalysisDto {
   todos: TodoItem[];
+  dependencies: string[];
 }

@@ -3,9 +3,9 @@ use std::{fs, path::Path};
 use regex::Regex;
 use walkdir::WalkDir;
 
-use crate::analysis::dto::{AnalysisDto, TodoItem};
+use crate::analysis::dto::{TodoItem};
 
-pub fn scan(path: &str) -> Result<AnalysisDto, String> {
+pub fn scan(path: &str) -> Result<Vec<TodoItem>, String> {
     // Matches:
     // // TODO:
     // // FIXME:
@@ -54,7 +54,7 @@ pub fn scan(path: &str) -> Result<AnalysisDto, String> {
         }
     }
 
-    Ok(AnalysisDto { todos })
+    Ok(todos)
 }
 
 fn should_ignore(path: &Path) -> bool {

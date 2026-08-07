@@ -40,6 +40,7 @@ export default function ProjectCard({
 
 //  for checking if analysis is being fetched correctly
 
+// console.log("Dependencies:", analysis?.dependencies);
 // console.log(project.name);
 // console.log(analysis?.todos);
 
@@ -282,11 +283,28 @@ export default function ProjectCard({
         </div>
 
         {analysis && (
-  <div className="mt-3">
+  <div className="mt-3 flex flex-wrap gap-2">
     <Badge tone="neutral">
       📝 {analysis.todos.length} TODO
       {analysis.todos.length !== 1 ? "s" : ""}
     </Badge>
+
+    {analysis.dependencies
+      .slice(0, 5)
+      .map((dependency) => (
+        <Badge
+          key={dependency}
+          tone="success"
+        >
+          {dependency}
+        </Badge>
+      ))}
+
+    {analysis.dependencies.length > 5 && (
+      <Badge tone="neutral">
+        +{analysis.dependencies.length - 5}
+      </Badge>
+    )}
   </div>
 )}
 
