@@ -7,6 +7,8 @@ import { AnalysisDto } from "../types/analysis";
 interface AnalysisStore {
   analysis: Record<string, AnalysisDto>;
 
+  loading: Record<string, boolean>;
+
   analyze: (
     projectId: string,
     path: string
@@ -16,20 +18,27 @@ interface AnalysisStore {
 export const useAnalysisStore =
   create<AnalysisStore>((set) => ({
     analysis: {},
-
-    analyze: async (
-      projectId,
-      path
-    ) => {
-      const result =
-        await analyzeProject(path);
-
-      set((state) => ({
-        analysis: {
-          ...state.analysis,
-
-          [projectId]: result,
-        },
-      }));
+    loading: {},
+    analyze: async (projectId, path) => {
+  set((state) => ({
+    loading: {
+      ...state.loading,
+      [projectId]: true,
     },
+  }));
+
+  const result = await analyzeProject(path);
+
+  set((state) => ({
+  analysis: {
+    ...state.analysis,
+    [projectId]: result,
+  },
+
+  loading: {
+    ...state.loading,
+    [projectId]: false,
+  },
+}));
+},
   }));

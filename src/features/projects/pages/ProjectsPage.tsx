@@ -1,9 +1,3 @@
-// TODO: Replace temporary analysis test with AnalysisStore integration
-// FIXME: Move analysis out of ProjectsPage
-// HACK: Temporary debugging code for Sprint 5
-// TODO: Add error handling for analyzeProject
-
-
 import {
   Grid2X2,
   List,
@@ -29,29 +23,28 @@ export default function ProjectsPage() {
   const projectView = useUiPreferencesStore((state) => state.projectView);
   const setProjectView = useUiPreferencesStore((state) => state.setProjectView);
   const analyze = useAnalysisStore((state) => state.analyze);
+  const analysis = useAnalysisStore((state) => state.analysis);
   
 
-  useEffect(() => {
-    loadProjects().catch((error) => {
-      console.error("Failed to load projects:", error);
-    });
-  }, [loadProjects]);
+  // Load projects
+useEffect(() => {
+  loadProjects().catch((error) => {
+    console.error(error);
+  });
+}, [loadProjects]);
 
-  useEffect(() => {
+// Analyze projects once
+useEffect(() => {
   if (projects.length === 0) {
     return;
   }
 
-  const runAnalysis = async () => {
-    await Promise.all(
-      projects.map((project) =>
-        analyze(project.id, project.path)
-      )
-    );
-  };
-
-  runAnalysis().catch(console.error);
-}, [projects, analyze]);
+  projects.forEach((project) => {
+    if (!analysis[project.id]) {
+      void analyze(project.id, project.path);
+    }
+  });
+}, [projects, analysis, analyze]);
 
   const filteredProjects = sortProjectsByRecent(projects).filter((project) => {
     const query = searchQuery.toLowerCase();
