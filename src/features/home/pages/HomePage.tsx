@@ -1,22 +1,21 @@
 import { useMemo, useState } from "react";
 import {
-  ArrowRight,
-  Clock3,
-  FolderOpen,
   GitBranch,
   Pin,
   Search,
-  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { useProjectStore } from "@/features/projects/store/projectStore";
 import { launchProject } from "@/features/workspace/services/launcher";
-import { Badge, Button, Card, Input } from "@/shared/components/ui";
+import { Button, Card, Input } from "@/shared/components/ui";
 import SummaryCards from "@/features/dashboard/components/SummaryCards";
 import InsightsPanel from "@/features/dashboard/components/InsightsPanel";
 import { useAppStore } from "@/features/app/store/appStore";
 import { refreshApplicationState } from "@/features/app/coordinator/appCoordinator";
+import ContinueWorking from "@/features/dashboard/components/ContinueWorking";
+import RecentActivity from "@/features/dashboard/components/RecentActivity";
+import Statistics from "@/features/dashboard/components/Statistics";
 import {
   formatRelativeDate,
   getProjectStatusLabel,
@@ -136,78 +135,10 @@ export default function HomePage() {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_260px]">
         <div className="space-y-6">
-          <section>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">
-                Continue Working
-              </h2>
-            </div>
-
-            {continueProject ? (
-              <Card className="p-6">
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                  <div className="min-w-0">
-                    <div className="mb-4 flex items-center gap-2 text-[12px] text-[var(--color-text-tertiary)]">
-                      <Sparkles
-                        size={14}
-                        className="text-[var(--color-accent)]"
-                      />
-                      <span>Most recent project</span>
-                    </div>
-
-                    <h3 className="text-[28px] font-bold leading-none tracking-tight text-[var(--color-text-primary)]">
-                      {continueProject.name}
-                    </h3>
-
-                    <p className="mt-3 text-[13px] text-[var(--color-text-secondary)]">
-                      {continueProject.metadata.framework} · {continueProject.metadata.language}
-                    </p>
-
-                    <div className="mt-5 flex flex-wrap items-center gap-2">
-                      <Badge tone={continueProject.gitDirty ? "warning" : "success"}>
-                        {continueProject.gitDirty ? "Modified" : "Clean"}
-                      </Badge>
-
-                      <Badge>
-                        {continueProject.gitBranch ?? "No git"}
-                      </Badge>
-
-                      <Badge>
-                        {formatRelativeDate(continueProject.lastOpened)}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={() =>
-                      openProject(
-                        continueProject.id,
-                        continueProject.path
-                      )
-                    }
-                  >
-                    <span>Continue in VS Code</span>
-                    <ArrowRight size={14} />
-                  </Button>
-                </div>
-              </Card>
-            ) : (
-              <Card className="flex flex-col items-center justify-center gap-3 border-dashed bg-[var(--color-bg-surface)] py-10 text-center">
-                <FolderOpen
-                  size={24}
-                  className="text-[var(--color-text-tertiary)]"
-                />
-
-                <h3 className="text-[15px] font-medium">
-                  No projects yet
-                </h3>
-
-                <p className="text-[13px] text-[var(--color-text-secondary)]">
-                  Add your first project from the Projects page.
-                </p>
-              </Card>
-            )}
-          </section>
+          <ContinueWorking
+  project={continueProject}
+  onContinue={openProject}
+/>
 
           <section>
             <div className="mb-3">
@@ -339,86 +270,17 @@ export default function HomePage() {
         </div>
 
         <aside className="space-y-4">
-          <section>
-            <div className="mb-3 flex items-center gap-2">
-              <Clock3
-                size={14}
-                className="text-[var(--color-text-tertiary)]"
-              />
+          <RecentActivity items={activityItems}/>
 
-              <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">
-                Recent Activity
-              </h2>
-            </div>
-
-            <Card className="space-y-4">
-              {activityItems.length > 0 ? (
-                activityItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="border-b border-[var(--color-border-subtle)] pb-4 last:border-b-0 last:pb-0"
-                  >
-                    <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
-                      {item.title}
-                    </p>
-
-                    <p className="mt-1 text-[12px] text-[var(--color-text-secondary)]">
-                      {item.detail}
-                    </p>
-
-                    <p className="mt-1 text-[12px] text-[var(--color-text-tertiary)]">
-                      {item.time}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-[13px] text-[var(--color-text-secondary)]">
-                  No recent activity yet.
-                </p>
-              )}
-            </Card>
-          </section>
-
-          <section>
-            <h2 className="mb-3 text-[18px] font-semibold text-[var(--color-text-primary)]">
-              Statistics
-            </h2>
-
-            <Card className="space-y-3">
-              <div className="flex items-center justify-between text-[13px]">
-                <span className="text-[var(--color-text-secondary)]">
-                  Tracked projects
-                </span>
-
-                <span className="font-medium text-[var(--color-text-primary)]">
-                  {projects.length}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between text-[13px]">
-                <span className="text-[var(--color-text-secondary)]">
-                  Pinned
-                </span>
-
-                <span className="font-medium text-[var(--color-text-primary)]">
-                  {pinnedProjects.length}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between text-[13px]">
-                <span className="text-[var(--color-text-secondary)]">
-                  Dirty branches
-                </span>
-
-                <span className="font-medium text-[var(--color-text-primary)]">
-                  {
-                    projects.filter((project) => project.gitDirty)
-                      .length
-                  }
-                </span>
-              </div>
-            </Card>
-          </section>
+          <Statistics
+  statistics={{
+    trackedProjects: projects.length,
+    pinnedProjects: pinnedProjects.length,
+    dirtyBranches: projects.filter(
+      (project) => project.gitDirty
+    ).length,
+  }}
+/>
         </aside>
       </div>
     </div>
