@@ -6,7 +6,6 @@ import {
 
 import { Badge, Button, Card } from "@/shared/components/ui";
 import { formatRelativeDate } from "@/shared/utils/projectFormatting";
-
 import { Project } from "@/features/projects/types/project";
 
 interface ContinueWorkingProps {
@@ -16,11 +15,16 @@ interface ContinueWorkingProps {
     projectId: string,
     path: string
   ) => void | Promise<void>;
+
+  onViewDetails: (
+    projectId: string
+  ) => void;
 }
 
 export default function ContinueWorking({
   project,
   onContinue,
+  onViewDetails,
 }: ContinueWorkingProps) {
   return (
     <section>
@@ -77,18 +81,29 @@ export default function ContinueWorking({
               </div>
             </div>
 
-            <Button
-              onClick={() =>
-                onContinue(
-                  project.id,
-                  project.path
-                )
-              }
-            >
-              <span>Continue in VS Code</span>
+            <div className="flex flex-col gap-2 lg:min-w-[220px]">
+  <Button
+    onClick={() =>
+      onContinue(
+        project.id,
+        project.path
+      )
+    }
+  >
+    <span>Continue Working</span>
 
-              <ArrowRight size={14} />
-            </Button>
+    <ArrowRight size={14} />
+  </Button>
+
+  <Button
+    variant="secondary"
+    onClick={() =>
+      onViewDetails(project.id)
+    }
+  >
+    View Details
+  </Button>
+</div>
           </div>
         </Card>
       ) : (

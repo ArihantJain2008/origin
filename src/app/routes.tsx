@@ -6,6 +6,7 @@ import HomePage from "@/features/home/pages/HomePage";
 import ProjectsPage from "@/features/projects/pages/ProjectsPage";
 import WorkspacePage from "@/features/workspace/pages/WorkspacePage";
 import SettingsPage from "@/features/settings/pages/SettingsPage";
+import ProjectDetailsPage from "@/features/projects/pages/ProjectDetailsPage";
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +21,12 @@ export const router = createBrowserRouter([
         path: "projects",
         element: <ProjectsPage />,
       },
+
+      {
+  path: "projects/:id",
+  element: <ProjectDetailsPage />,
+},
+
       {
         path: "workspace",
         element: <WorkspacePage />,

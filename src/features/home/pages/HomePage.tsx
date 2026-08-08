@@ -138,6 +138,9 @@ export default function HomePage() {
           <ContinueWorking
   project={continueProject}
   onContinue={openProject}
+  onViewDetails={(projectId) =>
+    navigate(`/projects/${projectId}`)
+  }
 />
 
           <section>

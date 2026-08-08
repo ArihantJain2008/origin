@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { useAnalysisStore } from "@/features/analysis/store/analysisStore";
 import { useEffect, useRef, useState } from "react";
 import { refreshApplicationState } from "@/features/app/coordinator/appCoordinator";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   project: Project;
@@ -44,6 +45,11 @@ export default function ProjectCard({
   const analysis = useAnalysisStore(
   (state) => state.analysis[project.id]
 );
+
+const navigate = useNavigate();
+const handleOpenDetails = () => {
+  navigate(`/projects/${project.id}`);
+};
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -137,7 +143,7 @@ console.log("Health:", analysis?.health);
       <Card className="p-0">
         <div className="flex min-h-16 items-center gap-4 px-4 py-3">
           <button
-            onClick={handleOpenProject}
+            onClick={handleOpenDetails}
             className="min-w-0 flex-1 text-left"
           >
             <div className="flex items-center gap-3">
@@ -199,45 +205,74 @@ console.log("Health:", analysis?.health);
   className="relative"
 >
             <button
-  onClick={(event) => {
-    event.stopPropagation();
-    setMenuOpen((open) => !open);
-  }}
+  onClick={async (event) => {
+  event.stopPropagation();
+  await handleToggleFavorite();
+  setMenuOpen(false);
+}}
   className="flex h-7 w-7 items-center justify-center rounded-[8px] text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
 >
   <Ellipsis size={15} />
 </button>
 
 {menuOpen && (
-  <div className="absolute right-0 top-9 z-20 min-w-40 rounded-[8px] border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-1 shadow-[var(--shadow-float)]">
+  <div className="absolute right-0 top-9 z-20 min-w-44 rounded-[8px] border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-1 shadow-[var(--shadow-float)]">
+
     <button
       className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
-      onClick={handleOpenProject}
+      onClick={() => {
+        handleOpenDetails();
+        setMenuOpen(false);
+      }}
     >
-                Open project
-              </button>
+      View Details
+    </button>
 
-              <button
-                className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
-                onClick={() => revealProject(project.path)}
-              >
-                Reveal in Explorer
-              </button>
+    <button
+      className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
+      onClick={async () => {
+        await handleOpenProject();
+        setMenuOpen(false);
+      }}
+    >
+      Open Project
+    </button>
 
-              <button
-  className="flex w-full items-center gap-2 rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
-  onClick={handleRefreshAnalysis}
->
-  Refresh Analysis
-</button>
+    <div className="my-1 border-t border-[var(--color-border-subtle)]" />
 
-              <button
-                className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] text-[var(--color-danger)] hover:bg-[var(--color-bg-hover)]"
-                onClick={handleRemoveProject}
-              >
-                Remove project
-              </button>
-            </div>
+    <button
+      className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
+      onClick={() => {
+        revealProject(project.path);
+        setMenuOpen(false);
+      }}
+    >
+      Reveal in Explorer
+    </button>
+
+    <button
+      className="flex w-full items-center gap-2 rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
+      onClick={async (event) => {
+        await handleRefreshAnalysis(event);
+        setMenuOpen(false);
+      }}
+    >
+      Refresh Analysis
+    </button>
+
+    <div className="my-1 border-t border-[var(--color-border-subtle)]" />
+
+    <button
+      className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] text-[var(--color-danger)] hover:bg-[var(--color-bg-hover)]"
+      onClick={async () => {
+        await handleRemoveProject();
+        setMenuOpen(false);
+      }}
+    >
+      Remove Project
+    </button>
+
+  </div>
 )}
           </div>
         </div>
@@ -344,39 +379,65 @@ console.log("Health:", analysis?.health);
     <Ellipsis size={15} />
   </button>
 
-  {menuOpen && (
-    <div className="absolute right-0 top-9 z-20 min-w-44 rounded-[8px] border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-1 shadow-[var(--shadow-float)]">
-      <button
-        className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
-        onClick={() => {
-          revealProject(project.path);
-          setMenuOpen(false);
-        }}
-      >
-        Reveal in Explorer
-      </button>
+{menuOpen && (
+  <div className="absolute right-0 top-9 z-20 min-w-44 rounded-[8px] border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-1 shadow-[var(--shadow-float)]">
 
-      <button
-        className="flex w-full items-center gap-2 rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
-        onClick={async (event) => {
-          await handleRefreshAnalysis(event);
-          setMenuOpen(false);
-        }}
-      >
-        Refresh Analysis
-      </button>
+    <button
+      className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
+      onClick={() => {
+        handleOpenDetails();
+        setMenuOpen(false);
+      }}
+    >
+      View Details
+    </button>
 
-      <button
-        className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] text-[var(--color-danger)] hover:bg-[var(--color-bg-hover)]"
-        onClick={async () => {
-          await handleRemoveProject();
-          setMenuOpen(false);
-        }}
-      >
-        Remove Project
-      </button>
-    </div>
-  )}
+    <button
+      className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
+      onClick={async () => {
+        await handleOpenProject();
+        setMenuOpen(false);
+      }}
+    >
+      Open Project
+    </button>
+
+    <div className="my-1 border-t border-[var(--color-border-subtle)]" />
+
+    <button
+      className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
+      onClick={() => {
+        revealProject(project.path);
+        setMenuOpen(false);
+      }}
+    >
+      Reveal in Explorer
+    </button>
+
+    <button
+      className="flex w-full items-center gap-2 rounded-[6px] px-3 py-2 text-left text-[13px] hover:bg-[var(--color-bg-hover)]"
+      onClick={async (event) => {
+        await handleRefreshAnalysis(event);
+        setMenuOpen(false);
+      }}
+    >
+      Refresh Analysis
+    </button>
+
+    <div className="my-1 border-t border-[var(--color-border-subtle)]" />
+
+    <button
+      className="block w-full rounded-[6px] px-3 py-2 text-left text-[13px] text-[var(--color-danger)] hover:bg-[var(--color-bg-hover)]"
+      onClick={async () => {
+        await handleRemoveProject();
+        setMenuOpen(false);
+      }}
+    >
+      Remove Project
+    </button>
+
+  </div>
+)}
 </div>
         </div>
       </div>
@@ -388,6 +449,16 @@ console.log("Health:", analysis?.health);
   >
     Open Project
   </Button>
+
+  <div className="mt-2">
+  <Button
+    variant="secondary"
+    onClick={handleOpenDetails}
+    className="w-full"
+  >
+    View Details
+  </Button>
+</div>
 </div>
 
       <div className="mt-5 flex items-center gap-2">
