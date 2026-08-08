@@ -1,9 +1,30 @@
-import { Navigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft,
+} from "lucide-react";
 
+import {
+  Navigate,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+
+import { useAnalysisStore } from "@/features/analysis/store/analysisStore";
+import { Button } from "@/shared/components/ui";
+
+import ProjectDependencies from "../components/ProjectDependencies";
+import ProjectHeader from "../components/ProjectHeader";
+import ProjectInsights from "../components/ProjectInsights";
+import ProjectOverview from "../components/ProjectOverview";
+import ProjectQuickActions from "../components/ProjectQuickActions";
+import ProjectReadme from "../components/ProjectReadme";
+import ProjectTodos from "../components/ProjectTodos";
+import { buildProjectDetailsModel } from "../model/projectDetailsModel";
 import { useProjectStore } from "../store/projectStore";
 
 export default function ProjectDetailsPage() {
   const { id } = useParams();
+
+  const navigate = useNavigate();
 
   const projects = useProjectStore(
     (state) => state.projects
@@ -11,6 +32,13 @@ export default function ProjectDetailsPage() {
 
   const project = projects.find(
     (project) => project.id === id
+  );
+
+  const analysis = useAnalysisStore(
+    (state) =>
+      project
+        ? state.analysis[project.id]
+        : undefined
   );
 
   if (!projects.length) {
@@ -22,23 +50,50 @@ export default function ProjectDetailsPage() {
   }
 
   if (!project) {
-    return <Navigate to="/projects" replace />;
+    return (
+      <Navigate
+        to="/projects"
+        replace
+      />
+    );
   }
 
+  const model = buildProjectDetailsModel(
+    project,
+    analysis
+  );
+
   return (
-    <div className="space-y-4">
-      <h1 className="text-3xl font-bold">
-        {project.name}
-      </h1>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <Button
+        variant="ghost"
+        className="w-fit px-0 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+        onClick={() => navigate("/projects")}
+      >
+        <ArrowLeft size={15} />
 
-      <p>{project.path}</p>
+        <span>Back to Projects</span>
+      </Button>
 
-      <p>
-        {project.metadata.framework} •{" "}
-        {project.metadata.language}
-      </p>
+      <ProjectHeader model={model} />
 
-      <p>{project.gitBranch ?? "No Git"}</p>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <ProjectOverview model={model} />
+
+        <ProjectInsights model={model} />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <ProjectReadme model={model} />
+
+        <ProjectQuickActions model={model} />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <ProjectDependencies model={model} />
+
+        <ProjectTodos model={model} />
+      </div>
     </div>
   );
 }

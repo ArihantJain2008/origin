@@ -23,6 +23,8 @@ export interface ProjectDetailsModel {
   framework: string;
 
   language: string;
+
+  lastOpened?: string;
 }
 
 export function buildProjectDetailsModel(
@@ -55,5 +57,7 @@ export function buildProjectDetailsModel(
     framework: project.metadata.framework,
 
     language: project.metadata.language,
+
+    lastOpened: project.lastOpened,
   };
 }
