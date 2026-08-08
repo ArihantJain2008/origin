@@ -11,6 +11,7 @@ import {
 import { useAnalysisStore } from "@/features/analysis/store/analysisStore";
 import { Button } from "@/shared/components/ui";
 
+import ProjectAnalysisSummary from "../components/ProjectAnalysisSummary";
 import ProjectDependencies from "../components/ProjectDependencies";
 import ProjectHeader from "../components/ProjectHeader";
 import ProjectInsights from "../components/ProjectInsights";
@@ -34,11 +35,23 @@ export default function ProjectDetailsPage() {
     (project) => project.id === id
   );
 
+  /*
+   * Keep these as separate Zustand selectors.
+   *
+   * Do NOT return an object from a single selector here.
+   */
   const analysis = useAnalysisStore(
     (state) =>
       project
         ? state.analysis[project.id]
         : undefined
+  );
+
+  const analysisLoading = useAnalysisStore(
+    (state) =>
+      project
+        ? Boolean(state.loading[project.id])
+        : false
   );
 
   if (!projects.length) {
@@ -60,11 +73,13 @@ export default function ProjectDetailsPage() {
 
   const model = buildProjectDetailsModel(
     project,
-    analysis
+    analysis,
+    analysisLoading
   );
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-[1440px] px-6 py-6 2xl:px-8">
+        <div className="space-y-6">
       <Button
         variant="ghost"
         className="w-fit px-0 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
@@ -76,6 +91,10 @@ export default function ProjectDetailsPage() {
       </Button>
 
       <ProjectHeader model={model} />
+
+      <ProjectAnalysisSummary
+        model={model}
+      />
 
       <div className="grid gap-6 xl:grid-cols-2">
         <ProjectOverview model={model} />
@@ -94,6 +113,7 @@ export default function ProjectDetailsPage() {
 
         <ProjectTodos model={model} />
       </div>
+    </div>
     </div>
   );
 }

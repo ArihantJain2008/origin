@@ -1,12 +1,16 @@
 import { Command } from "../types/command";
 
-export function getCommands(navigate: (path: string) => void): Command[] {
+export function getCommands(
+  navigate: (path: string) => void
+): Command[] {
   return [
     {
       id: "home",
       title: "Go to Home",
       subtitle: "Navigate to dashboard",
-      keywords: ["dashboard", "start"],
+      category: "navigation",
+      keywords: ["dashboard", "start", "home"],
+      defaultShortcut: "Ctrl+H",
       action: () => navigate("/"),
     },
 
@@ -14,23 +18,28 @@ export function getCommands(navigate: (path: string) => void): Command[] {
       id: "projects",
       title: "Go to Projects",
       subtitle: "View all projects",
-      keywords: ["project", "workspace", "files"],
+      category: "navigation",
+      keywords: [
+        "project",
+        "projects",
+        "files",
+      ],
+      defaultShortcut: "Ctrl+2",
       action: () => navigate("/projects"),
-    },
-
-    {
-      id: "workspace",
-      title: "Go to Workspace",
-      subtitle: "Open workspace",
-      keywords: ["editor", "coding"],
-      action: () => navigate("/workspace"),
     },
 
     {
       id: "settings",
       title: "Go to Settings",
       subtitle: "Application preferences",
-      keywords: ["preferences", "config", "editor", "theme"],
+      category: "application",
+      keywords: [
+        "preferences",
+        "config",
+        "settings",
+        "theme",
+      ],
+      defaultShortcut: "Ctrl+,",
       action: () => navigate("/settings"),
     },
   ];

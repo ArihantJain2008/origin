@@ -6,6 +6,10 @@ export interface ProjectDetailsModel {
 
   analysis?: AnalysisDto;
 
+  analysisAvailable: boolean;
+
+  analysisLoading: boolean;
+
   healthScore: number;
 
   gitBranch: string;
@@ -29,24 +33,37 @@ export interface ProjectDetailsModel {
 
 export function buildProjectDetailsModel(
   project: Project,
-  analysis?: AnalysisDto
+  analysis?: AnalysisDto,
+  analysisLoading = false
 ): ProjectDetailsModel {
+  const analysisAvailable = Boolean(analysis);
+
   return {
     project,
 
     analysis,
 
-    healthScore: analysis?.health.score ?? 0,
+    analysisAvailable,
 
-    gitBranch: project.gitBranch ?? "Not a Git repository",
+    analysisLoading,
 
-    isGitRepository: Boolean(project.gitBranch),
+    healthScore:
+      analysis?.health.score ?? 0,
 
-    isDirty: project.gitDirty,
+    gitBranch:
+      project.gitBranch ??
+      "Not a Git repository",
 
-    readmeAvailable: Boolean(
-      analysis?.readme.description
-    ),
+    isGitRepository:
+      Boolean(project.gitBranch),
+
+    isDirty:
+      project.gitDirty,
+
+    readmeAvailable:
+      Boolean(
+        analysis?.readme.description
+      ),
 
     dependencyCount:
       analysis?.dependencies.length ?? 0,
@@ -54,10 +71,13 @@ export function buildProjectDetailsModel(
     todoCount:
       analysis?.todos.length ?? 0,
 
-    framework: project.metadata.framework,
+    framework:
+      project.metadata.framework,
 
-    language: project.metadata.language,
+    language:
+      project.metadata.language,
 
-    lastOpened: project.lastOpened,
+    lastOpened:
+      project.lastOpened,
   };
 }

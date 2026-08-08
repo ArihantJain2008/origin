@@ -1,3 +1,9 @@
+export type CommandCategory =
+  | "navigation"
+  | "projects"
+  | "editor"
+  | "application";
+
 export interface Command {
   id: string;
 
@@ -7,5 +13,9 @@ export interface Command {
 
   keywords?: string[];
 
-  action: () => void;
+  category: CommandCategory;
+
+  defaultShortcut?: string;
+
+  action: () => void | Promise<void>;
 }

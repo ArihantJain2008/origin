@@ -3,6 +3,8 @@ import {
   ListTodo,
 } from "lucide-react";
 
+import { useState } from "react";
+
 import {
   Badge,
   Button,
@@ -18,14 +20,25 @@ interface ProjectTodosProps {
 export default function ProjectTodos({
   model,
 }: ProjectTodosProps) {
-  const hasTodos = model.todoCount > 0;
+  const [isOpen, setIsOpen] =
+    useState(false);
+
+  const todos =
+    model.analysis?.todos ?? [];
+
+  const hasTodos =
+    todos.length > 0;
+
+  const handleViewTodos = () => {
+    setIsOpen((current) => !current);
+  };
 
   return (
     <Card className="p-6">
       <div className="mb-5 flex items-center gap-3">
         <ListTodo
           size={22}
-          className="text-[var(--color-accent)]"
+          className="text-[var(--color-accent-primary)]"
         />
 
         <div>
@@ -40,7 +53,7 @@ export default function ProjectTodos({
       </div>
 
       <div className="rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <CheckCircle2
               size={18}
@@ -52,9 +65,9 @@ export default function ProjectTodos({
             />
 
             <div>
-              <p className="font-medium">
-                {model.todoCount} TODO
-                {model.todoCount !== 1 && "s"}
+              <p className="font-medium text-[var(--color-text-primary)]">
+                {todos.length} TODO
+                {todos.length !== 1 && "s"}
               </p>
 
               <p className="text-sm text-[var(--color-text-secondary)]">
@@ -72,21 +85,55 @@ export default function ProjectTodos({
                 : "success"
             }
           >
-            {hasTodos ? "Pending" : "Clear"}
+            {hasTodos
+              ? "Pending"
+              : "Clear"}
           </Badge>
         </div>
 
         <Button
-          disabled
+          disabled={!hasTodos}
+          onClick={handleViewTodos}
           className="mt-5 w-full"
         >
-          View TODOs
+          {isOpen
+            ? "Hide TODOs"
+            : "View TODOs"}
         </Button>
-
-        <p className="mt-2 text-center text-xs text-[var(--color-text-tertiary)]">
-          Interactive TODO explorer arrives in Story 034.
-        </p>
       </div>
+
+      {isOpen && hasTodos && (
+        <div className="mt-4 space-y-3">
+          {todos.map(
+            (todo, index) => (
+              <div
+                key={`${todo.file}-${todo.line}-${index}`}
+                className="rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] p-4"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="break-all font-mono text-xs text-[var(--color-text-tertiary)]">
+                      {todo.file}
+                      <span className="mx-1">
+                        :
+                      </span>
+                      {todo.line}
+                    </p>
+
+                    <p className="mt-2 text-sm text-[var(--color-text-primary)]">
+                      {todo.text}
+                    </p>
+                  </div>
+
+                  <Badge tone="neutral">
+                    {todo.kind}
+                  </Badge>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      )}
     </Card>
   );
 }
