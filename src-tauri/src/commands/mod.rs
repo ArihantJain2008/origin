@@ -4,3 +4,5 @@ pub mod processes;
 pub mod settings;
 pub mod workspace;
 pub mod git;
+pub mod media;
+pub mod system;

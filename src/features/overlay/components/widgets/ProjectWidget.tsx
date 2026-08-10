@@ -6,12 +6,18 @@ import {
   RefreshCw,
   Upload,
   GitCommit,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 
 import { invoke } from "@tauri-apps/api/core";
 
 import { useProjectStore } from "@/features/projects/store/projectStore";
 import RunCommandsWidget from "./RunCommandsWidget";
+import {
+  getGitChanges,
+  type GitChange,
+} from "@/features/projects/services/gitApi";
 
 function formatLastOpened(timestamp?: string) {
   if (!timestamp) {
@@ -85,7 +91,10 @@ export default function ProjectWidget() {
     useState<string[]>([]);
 
   const [gitStatus, setGitStatus] =
-    useState("");
+  useState("");
+
+  const [gitChanges, setGitChanges] =
+  useState<GitChange[]>([]);
 
   const [loadingGit, setLoadingGit] =
     useState(false);
@@ -100,6 +109,9 @@ export default function ProjectWidget() {
       type: "success" | "error";
       text: string;
     } | null>(null);
+
+    const [expanded, setExpanded] =
+  useState(false);
 
   useEffect(() => {
     if (projects.length === 0) {
@@ -134,6 +146,7 @@ export default function ProjectWidget() {
         status,
         currentBranch,
         branchList,
+        changes,
       ] = await Promise.all([
         invoke<string>(
           "git_status",
@@ -158,10 +171,15 @@ export default function ProjectWidget() {
               activeProject.path,
           }
         ),
+
+        getGitChanges(
+  activeProject.path
+),
       ]);
 
       setGitStatus(status);
       setBranch(currentBranch);
+      setGitChanges(changes);
 
       setBranches(
         branchList
@@ -178,6 +196,7 @@ export default function ProjectWidget() {
       setGitStatus("");
       setBranch("");
       setBranches([]);
+      setGitChanges([]);
 
       setMessage({
         type: "error",
@@ -194,6 +213,7 @@ export default function ProjectWidget() {
     setGitStatus("");
     setBranch("");
     setBranches([]);
+    setGitChanges([]);
 
     if (activeProject) {
       loadGitData();
@@ -250,6 +270,8 @@ export default function ProjectWidget() {
       setActionLoading(null);
     }
   }
+
+  
 
   async function handlePush() {
     if (!activeProject) {
@@ -370,23 +392,58 @@ export default function ProjectWidget() {
     <div className="space-y-4">
 
       {/* Project identity */}
-      <div>
-        <h2 className="text-sm font-medium text-white/80">
-          {activeProject.name}
-        </h2>
+      {/* Project identity */}
 
-        <p
-          title={activeProject.path}
-          className="
-            mt-1
-            truncate
-            text-[10px]
-            text-white/25
-          "
-        >
-          {activeProject.path}
-        </p>
-      </div>
+<div>
+  <div className="flex items-center justify-between gap-2">
+    <h2 className="truncate text-sm font-medium text-white/80">
+      {activeProject.name}
+    </h2>
+
+    <button
+      type="button"
+      onClick={() =>
+        setExpanded((value) => !value)
+      }
+      className="
+        flex
+        h-6
+        w-6
+        shrink-0
+        items-center
+        justify-center
+        rounded-md
+        text-white/30
+        transition
+        hover:bg-white/[0.05]
+        hover:text-white/70
+      "
+      aria-label={
+        expanded
+          ? "Collapse project"
+          : "Expand project"
+      }
+    >
+      {expanded ? (
+        <ChevronDown size={13} />
+      ) : (
+        <ChevronRight size={13} />
+      )}
+    </button>
+  </div>
+
+  <p
+    title={activeProject.path}
+    className="
+      mt-1
+      truncate
+      text-[10px]
+      text-white/25
+    "
+  >
+    {activeProject.path}
+  </p>
+</div>
 
       {/* Project metadata */}
       <div className="space-y-2.5">
@@ -475,6 +532,118 @@ export default function ProjectWidget() {
           </button>
         </div>
       </div>
+
+      {expanded && (
+  <div className="space-y-4">
+
+      {/* Git changes */}
+
+<div className="border-t border-white/[0.05] pt-3">
+  <div className="mb-2 flex items-center justify-between">
+    <p className="
+      text-[10px]
+      font-medium
+      uppercase
+      tracking-wider
+      text-white/30
+    ">
+      Changes
+    </p>
+
+    {gitChanges.length > 0 && (
+      <span className="
+        rounded-full
+        bg-white/[0.05]
+        px-1.5
+        py-0.5
+        text-[9px]
+        text-white/35
+      ">
+        {gitChanges.length}
+      </span>
+    )}
+  </div>
+
+  {loadingGit ? (
+    <p className="text-[10px] text-white/20">
+      Loading changes...
+    </p>
+  ) : gitChanges.length === 0 ? (
+    <p className="text-[10px] text-white/20">
+      Working tree clean
+    </p>
+  ) : (
+    <div className="space-y-1">
+      {gitChanges.slice(0, 6).map((change) => {
+        const status = change.status.trim();
+
+        const fileName =
+          change.path.split("/").pop() ??
+          change.path;
+
+        const statusColor =
+          status === "??"
+            ? "text-emerald-400/60"
+            : status.includes("A")
+              ? "text-emerald-400/60"
+              : status.includes("D")
+                ? "text-red-400/60"
+                : "text-amber-400/60";
+
+        return (
+          <div
+            key={`${change.status}-${change.path}`}
+            title={change.path}
+            className="
+              flex
+              min-w-0
+              items-center
+              gap-2
+              rounded-md
+              px-1.5
+              py-1
+              transition
+              hover:bg-white/[0.04]
+            "
+          >
+            <span
+              className={`
+                w-4
+                shrink-0
+                font-mono
+                text-[9px]
+                ${statusColor}
+              `}
+            >
+              {status}
+            </span>
+
+            <span
+              className="
+                truncate
+                text-[10px]
+                text-white/40
+              "
+            >
+              {fileName}
+            </span>
+          </div>
+        );
+      })}
+
+      {gitChanges.length > 6 && (
+        <p className="
+          px-1.5
+          pt-1
+          text-[9px]
+          text-white/20
+        ">
+          +{gitChanges.length - 6} more
+        </p>
+      )}
+    </div>
+  )}
+</div>
 
       {/* Git controls */}
       <div
@@ -678,24 +847,28 @@ export default function ProjectWidget() {
         />
       </div>
 
-      {/* Last opened */}
-      <div
-        className="
-          border-t
-          border-white/[0.05]
-          pt-3
-        "
-      >
-        <p className="text-[10px] text-white/20">
-          Last opened
-        </p>
+                {/* Last opened */}
 
-        <p className="mt-1 text-[11px] text-white/35">
-          {formatLastOpened(
-            activeProject.lastOpened
-          )}
-        </p>
-      </div>
+          <div
+            className="
+              border-t
+              border-white/[0.05]
+              pt-3
+            "
+          >
+            <p className="text-[10px] text-white/20">
+              Last opened
+            </p>
+
+            <p className="mt-1 text-[11px] text-white/35">
+              {formatLastOpened(
+                activeProject.lastOpened
+              )}
+            </p>
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }

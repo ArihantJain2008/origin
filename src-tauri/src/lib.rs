@@ -312,6 +312,18 @@ pub fn run() {
                 commands::git::git_push,
                 commands::git::git_branches,
                 commands::git::git_checkout,
+                commands::git::git_changes,
+
+                // Media
+                commands::media::media_get_current,
+                commands::media::media_play,
+                commands::media::media_pause,
+                commands::media::media_next,
+                commands::media::media_previous,
+                commands::media::media_seek,
+
+                // System
+                commands::system::system_get_stats,
             ],
         )
 

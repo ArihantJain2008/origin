@@ -5,12 +5,14 @@ import OverlayWidget from "./OverlayWidget";
 import NotesWidget from "./widgets/NotesWidget";
 import TodosWidget from "./widgets/TodosWidget";
 import ProjectWidget from "./widgets/ProjectWidget";
+import MusicWidget from "@/features/music/components/MusicWidget";
 
 import SearchBar from "./SearchBar";
 import SettingsPanel from "./SettingsPanel";
 
 import { useProjectStore } from "@/features/projects/store/projectStore";
 import { useOverlayStore } from "@/features/overlay/store/overlayStore";
+import SystemStatusBar from "./SystemStatusBar";
 
 interface WidgetShellProps {
   title: string;
@@ -366,22 +368,16 @@ export default function OverlayCanvas() {
       </div>
 
       {/* ======================================
-          MUSIC
-         ====================================== */}
+    MUSIC
+   ====================================== */}
 
-      <div className="pointer-events-auto">
-        <OverlayWidget id="music">
-          <WidgetShell title="Music">
-            <div className="text-sm text-white/80">
-              Everything In Its Right Place
-            </div>
-
-            <div className="mt-1 text-xs text-white/35">
-              Radiohead
-            </div>
-          </WidgetShell>
-        </OverlayWidget>
-      </div>
+<div className="pointer-events-auto">
+  <OverlayWidget id="music">
+    <WidgetShell title="Music">
+      <MusicWidget />
+    </WidgetShell>
+  </OverlayWidget>
+</div>
 
       {/* ======================================
           TODOS
@@ -412,57 +408,24 @@ export default function OverlayCanvas() {
         </OverlayWidget>
       </div>
 
-      {/* ======================================
-          ORIGIN BOTTOM BAR
-         ====================================== */}
+      {/* ==========================================
+    SYSTEM STATUS BAR
+   ========================================== */}
 
-      <div
-        className="
-          pointer-events-none
-          fixed
-          bottom-6
-          left-0
-          right-0
-          z-40
-          flex
-          justify-center
-        "
-      >
-        <div
-          className="
-            pointer-events-auto
-            flex
-            items-center
-            gap-3
-            rounded-full
-            border
-            border-white/[0.04]
-            bg-black/60
-            px-3
-            py-2
-            text-xs
-            text-white/50
-            backdrop-blur-xl
-          "
-        >
-          <div
-            className="
-              h-2
-              w-2
-              rounded-full
-              bg-[var(--origin-accent)]
-            "
-          />
-
-          <div className="font-medium">
-            ORIGIN
-          </div>
-
-          <div className="text-[12px] text-white/30">
-            Ctrl + Shift + Space
-          </div>
-        </div>
-      </div>
+<div
+  className="
+    pointer-events-none
+    fixed
+    bottom-6
+    left-0
+    right-0
+    z-40
+    flex
+    justify-center
+  "
+>
+  <SystemStatusBar />
+</div>
     </>
   );
 }

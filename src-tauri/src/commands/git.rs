@@ -171,3 +171,16 @@ pub fn git_checkout(
     )
 }
 
+#[tauri::command]
+pub fn git_changes(
+    project_path: String,
+) -> Result<String, String> {
+    run_git(
+        &project_path,
+        &[
+            "status",
+            "--short",
+            "--untracked-files=all",
+        ],
+    )
+}
