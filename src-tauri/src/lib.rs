@@ -16,11 +16,13 @@ mod state;
 
 use crate::database::database::Database;
 
-use tauri::Manager;
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::TrayIconBuilder,
+    Manager,
+};
 
 use commands::processes::ProcessState;
-
-use crate::services::project_service;
 
 use tauri_plugin_global_shortcut::{
     Code,
@@ -30,20 +32,18 @@ use tauri_plugin_global_shortcut::{
     ShortcutState,
 };
 
-// project_context and project_context_state removed: project selection is now explicit and frontend-driven
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
 
         // =====================================================
-        // Global Shortcut Plugin
+        // Global Shortcut
         // =====================================================
 
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, shortcut, event| {
-                    // Only react when the key is actually pressed.
+
                     if event.state() != ShortcutState::Pressed {
                         return;
                     }
@@ -62,15 +62,16 @@ pub fn run() {
                             "Origin overlay shortcut pressed"
                         );
 
-                        // IMPORTANT:
-                        // app is borrowed by run_on_main_thread().
-                        // A separate clone is moved into the closure.
                         let callback_handle = app.clone();
 
-                        // Simpler behavior: toggle the overlay only. No automatic project detection.
-                        let _ = app.run_on_main_thread(move || {
-                            overlay::toggle_overlay(&callback_handle, None);
-                        });
+                        let _ = app.run_on_main_thread(
+                            move || {
+                                overlay::toggle_overlay(
+                                    &callback_handle,
+                                    None,
+                                );
+                            },
+                        );
                     }
                 })
                 .build(),
@@ -80,7 +81,8 @@ pub fn run() {
         // Application Setup
         // =====================================================
 
-            .setup(|app| {
+        .setup(|app| {
+
             // -------------------------------------------------
             // Database
             // -------------------------------------------------
@@ -118,12 +120,17 @@ pub fn run() {
                 );
 
             app.manage(database);
-            // project_context_state removed; active project is persisted via settings and managed by the frontend
-            app.manage(ProcessState::default());
+
+            // -------------------------------------------------
+            // Process State
+            // -------------------------------------------------
+
+            app.manage(
+                ProcessState::default()
+            );
 
             // -------------------------------------------------
             // Global Overlay Shortcut
-            // Ctrl + Shift + Space
             // -------------------------------------------------
 
             let overlay_shortcut =
@@ -143,6 +150,103 @@ pub fn run() {
 
             println!(
                 "Origin overlay shortcut registered."
+            );
+
+            // -------------------------------------------------
+            // System Tray
+            // -------------------------------------------------
+
+            let show_item = MenuItem::with_id(
+                app,
+                "show",
+                "Open Origin",
+                true,
+                None::<&str>,
+            )?;
+
+            let overlay_item = MenuItem::with_id(
+                app,
+                "overlay",
+                "Open Overlay",
+                true,
+                None::<&str>,
+            )?;
+
+            let quit_item = MenuItem::with_id(
+                app,
+                "quit",
+                "Quit Origin",
+                true,
+                None::<&str>,
+            )?;
+
+            let tray_menu = Menu::with_items(
+                app,
+                &[
+                    &show_item,
+                    &overlay_item,
+                    &quit_item,
+                ],
+            )?;
+
+            TrayIconBuilder::new()
+                .icon(
+                    app.default_window_icon()
+                        .expect(
+                            "Default window icon not available",
+                        )
+                        .clone(),
+                )
+                .menu(&tray_menu)
+                .show_menu_on_left_click(false)
+                .tooltip("Origin")
+                .on_menu_event(
+                    |app, event| {
+                        match event.id.as_ref() {
+
+                            // ---------------------------------
+                            // Open Origin launcher
+                            // ---------------------------------
+
+                            "show" => {
+                                if let Some(window) =
+                                    app.get_webview_window("main")
+                                {
+                                    let _ =
+                                        window.show();
+
+                                    let _ =
+                                        window.set_focus();
+                                }
+                            }
+
+                            // ---------------------------------
+                            // Open Origin overlay
+                            // ---------------------------------
+
+                            "overlay" => {
+                                overlay::toggle_overlay(
+                                    app,
+                                    None,
+                                );
+                            }
+
+                            // ---------------------------------
+                            // Completely quit Origin
+                            // ---------------------------------
+
+                            "quit" => {
+                                app.exit(0);
+                            }
+
+                            _ => {}
+                        }
+                    },
+                )
+                .build(app)?;
+
+            println!(
+                "Origin system tray initialized."
             );
 
             Ok(())
@@ -174,6 +278,7 @@ pub fn run() {
 
         .invoke_handler(
             tauri::generate_handler![
+
                 // General
                 greet,
 
@@ -199,7 +304,6 @@ pub fn run() {
                 // Processes
                 commands::processes::launch_run_command,
                 commands::processes::stop_run_command,
-                // legacy project context removed
 
                 // Git
                 commands::git::git_status,
