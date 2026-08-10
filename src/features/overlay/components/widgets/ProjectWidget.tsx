@@ -1,9 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   CircleDot,
   Folder,
   GitBranch,
+  RefreshCw,
+  Upload,
+  GitCommit,
 } from "lucide-react";
+
+import { invoke } from "@tauri-apps/api/core";
 
 import { useProjectStore } from "@/features/projects/store/projectStore";
 import RunCommandsWidget from "./RunCommandsWidget";
@@ -54,12 +59,47 @@ function formatLastOpened(timestamp?: string) {
 }
 
 export default function ProjectWidget() {
+  const projects =
+    useProjectStore(
+      (state) => state.projects
+    );
 
-  const projects = useProjectStore((state) => state.projects);
+  const loadProjects =
+    useProjectStore(
+      (state) => state.loadProjects
+    );
 
-  const loadProjects = useProjectStore((state) => state.loadProjects);
+  const activeProjectId =
+    useProjectStore(
+      (state) =>
+        state.activeProjectId
+    );
 
-  const activeProjectId = useProjectStore((state) => state.activeProjectId);
+  const [commitMessage, setCommitMessage] =
+    useState("");
+
+  const [branch, setBranch] =
+    useState("");
+
+  const [branches, setBranches] =
+    useState<string[]>([]);
+
+  const [gitStatus, setGitStatus] =
+    useState("");
+
+  const [loadingGit, setLoadingGit] =
+    useState(false);
+
+  const [actionLoading, setActionLoading] =
+    useState<
+      "commit" | "push" | "branch" | null
+    >(null);
+
+  const [message, setMessage] =
+    useState<{
+      type: "success" | "error";
+      text: string;
+    } | null>(null);
 
   useEffect(() => {
     if (projects.length === 0) {
@@ -70,34 +110,270 @@ export default function ProjectWidget() {
         );
       });
     }
-  }, [projects.length, loadProjects]);
+  }, [
+    projects.length,
+    loadProjects,
+  ]);
 
-  const activeProject = projects.find((p) => p.id === activeProjectId) ?? null;
+  const activeProject =
+    projects.find(
+      (project) =>
+        project.id === activeProjectId
+    ) ?? null;
+
+  async function loadGitData() {
+    if (!activeProject) {
+      return;
+    }
+
+    setLoadingGit(true);
+    setMessage(null);
+
+    try {
+      const [
+        status,
+        currentBranch,
+        branchList,
+      ] = await Promise.all([
+        invoke<string>(
+          "git_status",
+          {
+            projectPath:
+              activeProject.path,
+          }
+        ),
+
+        invoke<string>(
+          "git_branch",
+          {
+            projectPath:
+              activeProject.path,
+          }
+        ),
+
+        invoke<string>(
+          "git_branches",
+          {
+            projectPath:
+              activeProject.path,
+          }
+        ),
+      ]);
+
+      setGitStatus(status);
+      setBranch(currentBranch);
+
+      setBranches(
+        branchList
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      );
+    } catch (error) {
+      console.error(
+        "Failed to load Git data:",
+        error
+      );
+
+      setGitStatus("");
+      setBranch("");
+      setBranches([]);
+
+      setMessage({
+        type: "error",
+        text: String(error),
+      });
+    } finally {
+      setLoadingGit(false);
+    }
+  }
+
+  useEffect(() => {
+    setCommitMessage("");
+    setMessage(null);
+    setGitStatus("");
+    setBranch("");
+    setBranches([]);
+
+    if (activeProject) {
+      loadGitData();
+    }
+  }, [activeProject?.id]);
+
+  async function handleCommit() {
+    if (!activeProject) {
+      return;
+    }
+
+    if (!commitMessage.trim()) {
+      setMessage({
+        type: "error",
+        text: "Enter a commit message.",
+      });
+
+      return;
+    }
+
+    setActionLoading("commit");
+    setMessage(null);
+
+    try {
+      await invoke(
+        "git_commit",
+        {
+          projectPath:
+            activeProject.path,
+          message:
+            commitMessage.trim(),
+        }
+      );
+
+      setCommitMessage("");
+
+      setMessage({
+        type: "success",
+        text: "Commit created successfully.",
+      });
+
+      await loadGitData();
+    } catch (error) {
+      console.error(
+        "Git commit failed:",
+        error
+      );
+
+      setMessage({
+        type: "error",
+        text: String(error),
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handlePush() {
+    if (!activeProject) {
+      return;
+    }
+
+    setActionLoading("push");
+    setMessage(null);
+
+    try {
+      await invoke(
+        "git_push",
+        {
+          projectPath:
+            activeProject.path,
+        }
+      );
+
+      setMessage({
+        type: "success",
+        text: "Pushed successfully.",
+      });
+
+      await loadGitData();
+    } catch (error) {
+      console.error(
+        "Git push failed:",
+        error
+      );
+
+      setMessage({
+        type: "error",
+        text: String(error),
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleBranchChange(
+    nextBranch: string
+  ) {
+    if (
+      !activeProject ||
+      !nextBranch ||
+      nextBranch === branch
+    ) {
+      return;
+    }
+
+    setActionLoading("branch");
+    setMessage(null);
+
+    try {
+      await invoke(
+        "git_checkout",
+        {
+          projectPath:
+            activeProject.path,
+          branch: nextBranch,
+        }
+      );
+
+      setBranch(nextBranch);
+
+      setMessage({
+        type: "success",
+        text: `Switched to ${nextBranch}.`,
+      });
+
+      await loadGitData();
+    } catch (error) {
+      console.error(
+        "Git branch switch failed:",
+        error
+      );
+
+      setMessage({
+        type: "error",
+        text: String(error),
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  }
 
   if (!activeProject) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-2">
         <div className="flex items-center gap-2">
           <Folder
-            size={15}
-            className="text-white/30"
+            size={14}
+            className="text-white/25"
           />
 
-          <span className="text-xs text-white/40">No project selected</span>
+          <span className="text-xs text-white/40">
+            No project selected
+          </span>
         </div>
 
-        <p className="text-[11px] leading-5 text-white/25">Pick a project to view details.</p>
+        <p className="text-[11px] leading-5 text-white/25">
+          Pick a project to view details.
+        </p>
       </div>
     );
   }
 
+  const isDirty =
+    gitStatus
+      .split("\n")
+      .some(
+        (line) =>
+          line.trim() &&
+          !line.startsWith("##")
+      );
+
   return (
     <div className="space-y-4">
+
       {/* Project identity */}
       <div>
-        <p className="text-sm font-medium text-white/80">
+        <h2 className="text-sm font-medium text-white/80">
           {activeProject.name}
-        </p>
+        </h2>
 
         <p
           title={activeProject.path}
@@ -114,6 +390,7 @@ export default function ProjectWidget() {
 
       {/* Project metadata */}
       <div className="space-y-2.5">
+
         <div className="flex items-center gap-2">
           <Folder
             size={13}
@@ -133,15 +410,17 @@ export default function ProjectWidget() {
           </span>
         </div>
 
-        {/* Git */}
+        {/* Git status */}
         <div className="flex items-center gap-2">
+
           <GitBranch
             size={13}
             className="text-white/25"
           />
 
-          <span className="text-xs text-white/40">
-            {activeProject.gitBranch ??
+          <span className="text-xs text-white/45">
+            {branch ||
+              activeProject.gitBranch ||
               "No branch"}
           </span>
 
@@ -153,7 +432,7 @@ export default function ProjectWidget() {
               gap-1.5
               text-[10px]
               ${
-                activeProject.gitDirty
+                isDirty
                   ? "text-amber-400/70"
                   : "text-emerald-400/60"
               }
@@ -161,37 +440,242 @@ export default function ProjectWidget() {
           >
             <CircleDot size={9} />
 
-            {activeProject.gitDirty
+            {isDirty
               ? "Modified"
               : "Clean"}
           </span>
+
+          <button
+            type="button"
+            onClick={loadGitData}
+            disabled={loadingGit}
+            className="
+              flex
+              h-6
+              w-6
+              items-center
+              justify-center
+              rounded-md
+              text-white/25
+              transition
+              hover:bg-white/[0.05]
+              hover:text-white/60
+              disabled:opacity-30
+            "
+            title="Refresh Git status"
+          >
+            <RefreshCw
+              size={11}
+              className={
+                loadingGit
+                  ? "animate-spin"
+                  : ""
+              }
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Git controls */}
+      <div
+        className="
+          space-y-3
+          border-t
+          border-white/[0.05]
+          pt-3
+        "
+      >
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">
+            Git
+          </p>
         </div>
 
-        <div
-  className="
-    border-t
-    border-white/[0.05]
-    pt-3
-  "
->
-  <p
-    className="
-      mb-2
-      text-[10px]
-      font-medium
-      uppercase
-      tracking-[0.12em]
-      text-white/25
-    "
-  >
-    Run
-  </p>
+        {/* Commit message */}
+        <textarea
+          value={commitMessage}
+          onChange={(event) =>
+            setCommitMessage(
+              event.target.value
+            )
+          }
+          placeholder="Commit message..."
+          rows={2}
+          className="
+            w-full
+            resize-none
+            rounded-lg
+            border
+            border-white/[0.06]
+            bg-white/[0.03]
+            px-3
+            py-2
+            text-[11px]
+            text-white/70
+            outline-none
+            placeholder:text-white/20
+            focus:border-white/[0.12]
+          "
+        />
 
-  <RunCommandsWidget
-    projectId={activeProject.id}
-    projectPath={activeProject.path}
-  />
-</div>
+        {/* Commit / Push */}
+        <div className="flex gap-2">
+
+          <button
+            type="button"
+            onClick={handleCommit}
+            disabled={
+              actionLoading !== null ||
+              !commitMessage.trim()
+            }
+            className="
+              flex
+              flex-1
+              items-center
+              justify-center
+              gap-1.5
+              rounded-lg
+              bg-white/[0.06]
+              px-3
+              py-2
+              text-[10px]
+              text-white/55
+              transition
+              hover:bg-white/[0.10]
+              hover:text-white/80
+              disabled:cursor-not-allowed
+              disabled:opacity-30
+            "
+          >
+            <GitCommit size={11} />
+
+            {actionLoading === "commit"
+              ? "Committing..."
+              : "Commit"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handlePush}
+            disabled={
+              actionLoading !== null
+            }
+            className="
+              flex
+              flex-1
+              items-center
+              justify-center
+              gap-1.5
+              rounded-lg
+              bg-white/[0.06]
+              px-3
+              py-2
+              text-[10px]
+              text-white/55
+              transition
+              hover:bg-white/[0.10]
+              hover:text-white/80
+              disabled:cursor-not-allowed
+              disabled:opacity-30
+            "
+          >
+            <Upload size={11} />
+
+            {actionLoading === "push"
+              ? "Pushing..."
+              : "Push"}
+          </button>
+
+        </div>
+
+        {/* Branch */}
+        <div>
+          <p className="mb-1.5 text-[10px] text-white/20">
+            Branch
+          </p>
+
+          <select
+            value={branch}
+            onChange={(event) =>
+              handleBranchChange(
+                event.target.value
+              )
+            }
+            disabled={
+              actionLoading !== null ||
+              branches.length === 0
+            }
+            className="
+              w-full
+              rounded-lg
+              border
+              border-white/[0.06]
+              bg-white/[0.03]
+              px-3
+              py-2
+              text-[10px]
+              text-white/55
+              outline-none
+              disabled:opacity-30
+            "
+          >
+            {branches.length === 0 ? (
+              <option value="">
+                No branches
+              </option>
+            ) : (
+              branches.map(
+                (item) => (
+                  <option
+                    key={item}
+                    value={item}
+                  >
+                    {item}
+                  </option>
+                )
+              )
+            )}
+          </select>
+        </div>
+
+        {/* Feedback */}
+        {message && (
+          <div
+            className={`
+              rounded-lg
+              border
+              px-3
+              py-2
+              text-[10px]
+              ${
+                message.type ===
+                "success"
+                  ? "border-emerald-400/10 bg-emerald-400/[0.04] text-emerald-400/60"
+                  : "border-red-400/10 bg-red-400/[0.04] text-red-400/60"
+              }
+            `}
+          >
+            {message.text}
+          </div>
+        )}
+      </div>
+
+      {/* Run commands */}
+      <div
+        className="
+          border-t
+          border-white/[0.05]
+          pt-3
+        "
+      >
+        <RunCommandsWidget
+          projectId={
+            activeProject.id
+          }
+          projectPath={
+            activeProject.path
+          }
+        />
       </div>
 
       {/* Last opened */}

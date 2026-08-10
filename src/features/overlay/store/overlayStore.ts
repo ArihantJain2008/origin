@@ -14,15 +14,31 @@ interface OverlayStore {
 
   widgetAppearance: "glass" | "solid";
 
-  accentColor: "green" | "blue" | "cyan" | "purple" | "red";
+  accentColor:
+    | "green"
+    | "blue"
+    | "cyan"
+    | "purple"
+    | "red";
 
-  transparency: number; // 0..100 (0 = opaque, 100 = most transparent)
+  transparency: number;
 
-  setWidgetAppearance: (value: "glass" | "solid") => void;
+  setWidgetAppearance: (
+    value: "glass" | "solid"
+  ) => void;
 
-  setAccentColor: (c: "green" | "blue" | "cyan" | "purple" | "red") => void;
+  setAccentColor: (
+    c:
+      | "green"
+      | "blue"
+      | "cyan"
+      | "purple"
+      | "red"
+  ) => void;
 
-  setTransparency: (value: number) => void;
+  setTransparency: (
+    value: number
+  ) => void;
 
   updateWidgetPosition: (
     id: OverlayWidgetId,
@@ -83,8 +99,11 @@ export const useOverlayStore =
     persist(
       (set) => ({
         widgets: defaultWidgets,
+
         widgetAppearance: "glass",
+
         accentColor: "blue",
+
         transparency: 28,
 
         updateWidgetPosition: (
@@ -126,20 +145,67 @@ export const useOverlayStore =
 
         resetLayout: () => {
           set({
-            widgets: defaultWidgets,
+            widgets: {
+              ...defaultWidgets,
+            },
           });
         },
 
-        setWidgetAppearance: (value) => {
-          set({ widgetAppearance: value });
+        setWidgetAppearance: (
+          value
+        ) => {
+          set({
+            widgetAppearance: value,
+          });
         },
 
-        setAccentColor: (c) => set({ accentColor: c }),
+        setAccentColor: (c) => {
+          set({
+            accentColor: c,
+          });
+        },
 
-        setTransparency: (value) => set({ transparency: Math.max(0, Math.min(100, value)) }),
+        setTransparency: (
+          value
+        ) => {
+          set({
+            transparency: Math.max(
+              0,
+              Math.min(100, value)
+            ),
+          });
+        },
       }),
+
       {
         name: "origin-overlay-layout",
+
+        /*
+         * Merge persisted state with the
+         * current defaults.
+         *
+         * This is important when a new
+         * widget is added.
+         */
+        merge: (
+          persistedState,
+          currentState
+        ) => {
+          const persisted =
+            persistedState as Partial<OverlayStore>;
+
+          return {
+            ...currentState,
+
+            ...persisted,
+
+            widgets: {
+              ...defaultWidgets,
+
+              ...(persisted.widgets ?? {}),
+            },
+          };
+        },
       }
     )
   );

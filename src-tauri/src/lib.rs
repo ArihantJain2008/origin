@@ -200,6 +200,14 @@ pub fn run() {
                 commands::processes::launch_run_command,
                 commands::processes::stop_run_command,
                 // legacy project context removed
+
+                // Git
+                commands::git::git_status,
+                commands::git::git_branch,
+                commands::git::git_commit,
+                commands::git::git_push,
+                commands::git::git_branches,
+                commands::git::git_checkout,
             ],
         )
 

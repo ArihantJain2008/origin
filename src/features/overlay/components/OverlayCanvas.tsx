@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import OverlayWidget from "./OverlayWidget";
 
@@ -6,43 +6,72 @@ import NotesWidget from "./widgets/NotesWidget";
 import TodosWidget from "./widgets/TodosWidget";
 import ProjectWidget from "./widgets/ProjectWidget";
 
-import WidgetManager, {
-  WidgetManagerTrigger,
-} from "./WidgetManager";
 import SearchBar from "./SearchBar";
 import SettingsPanel from "./SettingsPanel";
 
 import { useProjectStore } from "@/features/projects/store/projectStore";
 import { useOverlayStore } from "@/features/overlay/store/overlayStore";
-function WidgetShell({ title, children }: { title: string; children: React.ReactNode }) {
-  const appearance = useOverlayStore((s) => s.widgetAppearance);
-  const accent = useOverlayStore((s) => s.accentColor);
-  const transparency = useOverlayStore((s) => s.transparency);
+
+interface WidgetShellProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+function WidgetShell({
+  title,
+  children,
+}: WidgetShellProps) {
+  const appearance = useOverlayStore(
+    (state) => state.widgetAppearance
+  );
+
+  const transparency = useOverlayStore(
+    (state) => state.transparency
+  );
 
   const glass = appearance === "glass";
 
-  // map transparency (0..100) to background alpha, but keep a sensible minimum
+  /*
+   * Transparency
+   * 0   = opaque
+   * 100 = highly transparent
+   */
   const rawAlpha = 1 - transparency / 100;
-  const alpha = Math.max(0.12, Math.min(0.95, rawAlpha));
 
-  const bg = glass ? `rgba(6,6,8,${alpha * 0.6})` : `rgba(6,6,8,${alpha})`;
+  const alpha = Math.max(
+    0.12,
+    Math.min(0.95, rawAlpha)
+  );
 
-  const borderColor = `var(--origin-accent-border, rgba(255,255,255,0.06))`;
+  const background = glass
+    ? `rgba(6, 6, 8, ${alpha * 0.6})`
+    : `rgba(6, 6, 8, ${alpha})`;
+
+  const borderColor =
+    "var(--origin-accent-border, rgba(255,255,255,0.06))";
 
   return (
     <div
-      style={{ background: bg, borderColor }}
+      style={{
+        background,
+        borderColor,
+      }}
       className={`
         overflow-hidden
         rounded-2xl
         border
         shadow-2xl
-        ${glass ? "backdrop-blur-xl" : ""}
+        ${
+          glass
+            ? "backdrop-blur-xl"
+            : ""
+        }
       `}
     >
+      {/* Widget header */}
       <div
         data-overlay-drag-handle
-        className={`
+        className="
           flex
           items-center
           justify-between
@@ -50,138 +79,331 @@ function WidgetShell({ title, children }: { title: string; children: React.React
           border-white/[0.05]
           px-4
           py-3
-        `}
+        "
       >
-        <span className={`text-xs font-medium ${glass ? "text-white/60" : "text-white"}`}>
+        <span
+          className={`
+            text-xs
+            font-medium
+            ${
+              glass
+                ? "text-white/60"
+                : "text-white"
+            }
+          `}
+        >
           {title}
         </span>
 
-        <span style={{ color: glass ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.4)" }}>
+        <span
+          style={{
+            color: glass
+              ? "rgba(255,255,255,0.18)"
+              : "rgba(255,255,255,0.4)",
+          }}
+          className="
+            select-none
+            text-sm
+          "
+        >
           ⋮⋮
         </span>
       </div>
 
-      <div className="p-4">{children}</div>
+      {/* Widget content */}
+      <div className="p-4">
+        {children}
+      </div>
     </div>
   );
 }
 
 export default function OverlayCanvas() {
-  const [managerOpen, setManagerOpen] =
+  const [settingsOpen, setSettingsOpen] =
     useState(false);
 
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const accent = useOverlayStore((s) => s.accentColor);
-  const transparency = useOverlayStore((s) => s.transparency);
-  const appearance = useOverlayStore((s) => s.widgetAppearance);
+  const accent = useOverlayStore(
+    (state) => state.accentColor
+  );
 
-  // Apply CSS variables for the active accent and related tokens.
+  const transparency = useOverlayStore(
+    (state) => state.transparency
+  );
+
+  const appearance = useOverlayStore(
+    (state) => state.widgetAppearance
+  );
+
+  /*
+   * ==========================================
+   * ACCENT THEME
+   * ==========================================
+   */
+
   useEffect(() => {
-    const map: Record<string, { accent: string; accentSoft: string; accentBorder: string; accentGlow: string }> = {
+    const accentMap: Record<
+      string,
+      {
+        accent: string;
+        accentSoft: string;
+        accentBorder: string;
+        accentGlow: string;
+      }
+    > = {
       green: {
         accent: "#2ecc71",
-        accentSoft: "rgba(46,204,113,0.10)",
-        accentBorder: "rgba(46,204,113,0.14)",
-        accentGlow: "rgba(46,204,113,0.12)",
+        accentSoft:
+          "rgba(46,204,113,0.10)",
+        accentBorder:
+          "rgba(46,204,113,0.14)",
+        accentGlow:
+          "rgba(46,204,113,0.12)",
       },
+
       blue: {
         accent: "#60a5fa",
-        accentSoft: "rgba(96,165,250,0.10)",
-        accentBorder: "rgba(96,165,250,0.14)",
-        accentGlow: "rgba(96,165,250,0.12)",
+        accentSoft:
+          "rgba(96,165,250,0.10)",
+        accentBorder:
+          "rgba(96,165,250,0.14)",
+        accentGlow:
+          "rgba(96,165,250,0.12)",
       },
+
       cyan: {
         accent: "#22d3ee",
-        accentSoft: "rgba(34,211,238,0.10)",
-        accentBorder: "rgba(34,211,238,0.14)",
-        accentGlow: "rgba(34,211,238,0.12)",
+        accentSoft:
+          "rgba(34,211,238,0.10)",
+        accentBorder:
+          "rgba(34,211,238,0.14)",
+        accentGlow:
+          "rgba(34,211,238,0.12)",
       },
+
       purple: {
         accent: "#a78bfa",
-        accentSoft: "rgba(167,139,250,0.10)",
-        accentBorder: "rgba(167,139,250,0.14)",
-        accentGlow: "rgba(167,139,250,0.12)",
+        accentSoft:
+          "rgba(167,139,250,0.10)",
+        accentBorder:
+          "rgba(167,139,250,0.14)",
+        accentGlow:
+          "rgba(167,139,250,0.12)",
       },
+
       red: {
         accent: "#f87171",
-        accentSoft: "rgba(248,113,113,0.10)",
-        accentBorder: "rgba(248,113,113,0.14)",
-        accentGlow: "rgba(248,113,113,0.12)",
+        accentSoft:
+          "rgba(248,113,113,0.10)",
+        accentBorder:
+          "rgba(248,113,113,0.14)",
+        accentGlow:
+          "rgba(248,113,113,0.12)",
       },
     };
 
-    const tokens = map[accent] ?? map.blue;
+    const tokens =
+      accentMap[accent] ??
+      accentMap.blue;
 
-    const root = document.documentElement;
-    root.style.setProperty("--origin-accent", tokens.accent);
-    root.style.setProperty("--origin-accent-soft", tokens.accentSoft);
-    root.style.setProperty("--origin-accent-border", tokens.accentBorder);
-    root.style.setProperty("--origin-accent-glow", tokens.accentGlow);
+    const root =
+      document.documentElement;
 
-    // also expose appearance/transparency as CSS vars for components to consume
-    root.style.setProperty("--origin-appearance", appearance);
-    root.style.setProperty("--origin-transparency", String(transparency));
-  }, [accent, transparency, appearance]);
+    root.style.setProperty(
+      "--origin-accent",
+      tokens.accent
+    );
+
+    root.style.setProperty(
+      "--origin-accent-soft",
+      tokens.accentSoft
+    );
+
+    root.style.setProperty(
+      "--origin-accent-border",
+      tokens.accentBorder
+    );
+
+    root.style.setProperty(
+      "--origin-accent-glow",
+      tokens.accentGlow
+    );
+
+    root.style.setProperty(
+      "--origin-appearance",
+      appearance
+    );
+
+    root.style.setProperty(
+      "--origin-transparency",
+      String(transparency)
+    );
+  }, [
+    accent,
+    transparency,
+    appearance,
+  ]);
+
+  /*
+   * ==========================================
+   * ACTIVE PROJECT
+   * ==========================================
+   */
 
   const projects =
     useProjectStore(
       (state) => state.projects
     );
 
-  const activeProjectId = useProjectStore((state) => state.activeProjectId);
+  const activeProjectId =
+    useProjectStore(
+      (state) => state.activeProjectId
+    );
 
-  const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
+  const activeProject =
+    projects.find(
+      (project) =>
+        project.id === activeProjectId
+    ) ?? null;
 
-  const setActiveProject = useProjectStore((s) => s.setActiveProject);
-
-  // Project selection is explicit and persisted; activeProjectId is managed by the project store.
+  /*
+   * ==========================================
+   * RENDER
+   * ==========================================
+   *
+   * IMPORTANT:
+   * No outer wrapper here.
+   *
+   * OverlayWidget handles positioning,
+   * while each WidgetShell handles its
+   * own visual surface.
+   */
 
   return (
-    <div className="pointer-events-none relative h-full w-full">
-      <SearchBar />
+    <>
+      {/* ======================================
+          SEARCH BAR
+         ====================================== */}
 
-      {/* Gear / settings */}
-      <div className="pointer-events-auto fixed right-6 top-6">
+      <div
+        className="
+          pointer-events-auto
+          fixed
+          left-1/2
+          top-5
+          z-50
+          -translate-x-1/2
+        "
+      >
+        <SearchBar />
+      </div>
+
+      {/* ======================================
+          SETTINGS
+         ====================================== */}
+
+      <div
+        className="
+          pointer-events-auto
+          fixed
+          right-6
+          top-6
+          z-50
+        "
+      >
         <button
-          onClick={() => setSettingsOpen((s) => !s)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] bg-[#0b0b0d]/70 text-white/40 shadow-lg backdrop-blur-xl hover:text-white/70"
+          type="button"
+          onClick={() =>
+            setSettingsOpen(
+              (open) => !open
+            )
+          }
+          aria-label="Open Origin settings"
+          className="
+            flex
+            h-9
+            w-9
+            items-center
+            justify-center
+            rounded-lg
+            border
+            border-white/[0.08]
+            bg-[#0b0b0d]/70
+            text-white/40
+            shadow-lg
+            backdrop-blur-xl
+            transition
+            hover:border-[var(--origin-accent-border)]
+            hover:text-[var(--origin-accent)]
+          "
         >
           ⚙
         </button>
 
-        {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
+        {settingsOpen && (
+          <SettingsPanel
+            onClose={() =>
+              setSettingsOpen(false)
+            }
+          />
+        )}
       </div>
 
-      {/* Notes */}
+      {/* ======================================
+          NOTES
+         ====================================== */}
+
       <div className="pointer-events-auto">
         <OverlayWidget id="notes">
           <WidgetShell title="Notes">
-            <NotesWidget projectPath={activeProject?.path ?? null} />
+            <NotesWidget
+              projectPath={
+                activeProject?.path ??
+                null
+              }
+            />
           </WidgetShell>
         </OverlayWidget>
       </div>
 
-      {/* Music */}
+      {/* ======================================
+          MUSIC
+         ====================================== */}
+
       <div className="pointer-events-auto">
         <OverlayWidget id="music">
           <WidgetShell title="Music">
-            <div className="text-sm text-white/80">Everything In Its Right Place</div>
+            <div className="text-sm text-white/80">
+              Everything In Its Right Place
+            </div>
 
-            <div className="mt-1 text-xs text-white/35">Radiohead</div>
+            <div className="mt-1 text-xs text-white/35">
+              Radiohead
+            </div>
           </WidgetShell>
         </OverlayWidget>
       </div>
 
-      {/* Todos */}
+      {/* ======================================
+          TODOS
+         ====================================== */}
+
       <div className="pointer-events-auto">
         <OverlayWidget id="todos">
           <WidgetShell title="Todos">
-            <TodosWidget projectPath={activeProject?.path ?? null} />
+            <TodosWidget
+              projectPath={
+                activeProject?.path ??
+                null
+              }
+            />
           </WidgetShell>
         </OverlayWidget>
       </div>
 
-      {/* Project */}
+      {/* ======================================
+          PROJECT + GIT + RUN COMMANDS
+         ====================================== */}
+
       <div className="pointer-events-auto">
         <OverlayWidget id="project">
           <WidgetShell title="Project">
@@ -190,14 +412,57 @@ export default function OverlayCanvas() {
         </OverlayWidget>
       </div>
 
-      {/* Bottom bar */}
-      <div className="pointer-events-none fixed left-0 right-0 bottom-6 flex justify-center z-40">
-        <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-black/60 px-3 py-2 border border-white/[0.04] text-white/50 text-xs">
-          <div className="h-2 w-2 rounded-full bg-white/70" />
-          <div className="font-medium">ORIGIN</div>
-          <div className="text-[12px] text-white/30">Ctrl + Shift + Space</div>
+      {/* ======================================
+          ORIGIN BOTTOM BAR
+         ====================================== */}
+
+      <div
+        className="
+          pointer-events-none
+          fixed
+          bottom-6
+          left-0
+          right-0
+          z-40
+          flex
+          justify-center
+        "
+      >
+        <div
+          className="
+            pointer-events-auto
+            flex
+            items-center
+            gap-3
+            rounded-full
+            border
+            border-white/[0.04]
+            bg-black/60
+            px-3
+            py-2
+            text-xs
+            text-white/50
+            backdrop-blur-xl
+          "
+        >
+          <div
+            className="
+              h-2
+              w-2
+              rounded-full
+              bg-[var(--origin-accent)]
+            "
+          />
+
+          <div className="font-medium">
+            ORIGIN
+          </div>
+
+          <div className="text-[12px] text-white/30">
+            Ctrl + Shift + Space
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
