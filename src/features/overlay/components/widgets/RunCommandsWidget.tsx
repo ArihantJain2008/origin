@@ -187,9 +187,21 @@ export default function RunCommandsWidget({
                   {item.name}
                 </p>
 
-                <p className="truncate font-mono text-[9px] text-white/25">
-                  {item.command}
-                </p>
+                <pre
+  className="
+    mt-0.5
+    max-h-10
+    overflow-hidden
+    whitespace-pre-wrap
+    break-words
+    font-mono
+    text-[9px]
+    leading-4
+    text-white/25
+  "
+>
+  {item.command}
+</pre>
               </div>
 
               {isRunning && (
