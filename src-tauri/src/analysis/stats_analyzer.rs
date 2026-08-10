@@ -30,10 +30,7 @@ pub fn scan(project_path: &str) -> StatsInfo {
         }
     }
 
-    StatsInfo {
-        files,
-        lines,
-    }
+    StatsInfo { files, lines }
 }
 
 fn should_ignore(path: &Path) -> bool {

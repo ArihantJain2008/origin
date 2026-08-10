@@ -41,6 +41,15 @@ export async function removeProject(id: string) {
   });
 }
 
+export async function saveActiveProject(id: string | null) {
+  await invoke("save_active_project", { id });
+}
+
+export async function loadActiveProject(): Promise<string | null> {
+  const res = await invoke<string | null>("load_active_project");
+  return res;
+}
+
 export async function updateProjectFavorite(
   id: string,
   favorite: boolean

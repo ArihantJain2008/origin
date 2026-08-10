@@ -90,6 +90,9 @@ export default function HomePage() {
     projectId: string,
     path: string
   ) => {
+    // mark active project for overlay/widgets
+    useProjectStore.getState().setActiveProject(projectId);
+
     await launchProject(projectId, path);
     await refreshApplicationState();
   };

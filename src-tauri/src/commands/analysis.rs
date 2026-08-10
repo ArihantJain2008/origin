@@ -1,10 +1,7 @@
 use tauri::State;
 
 use crate::{
-    analysis::{
-        dto::AnalysisDto,
-        service,
-    },
+    analysis::{dto::AnalysisDto, service},
     database::database::Database,
 };
 

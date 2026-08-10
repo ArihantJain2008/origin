@@ -77,7 +77,7 @@ pub fn load_projects(database: &Database) -> Result<Vec<ProjectDto>> {
                 created_at: row.get(6)?,
                 updated_at: row.get(7)?,
                 last_opened: row.get(8)?,
-                
+
                 git_branch: None,
                 git_dirty: false,
             })
@@ -107,10 +107,7 @@ pub fn update_project_last_opened(database: &Database, id: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn remove_project(
-    database: &Database,
-    id: &str,
-) -> Result<()> {
+pub fn remove_project(database: &Database, id: &str) -> Result<()> {
     let connection = database.connection();
 
     connection.execute(
@@ -124,11 +121,7 @@ pub fn remove_project(
     Ok(())
 }
 
-pub fn update_project_favorite(
-    database: &Database,
-    id: &str,
-    favorite: bool,
-) -> Result<()> {
+pub fn update_project_favorite(database: &Database, id: &str, favorite: bool) -> Result<()> {
     let connection = database.connection();
 
     connection.execute(

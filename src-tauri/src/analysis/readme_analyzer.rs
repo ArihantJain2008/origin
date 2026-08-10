@@ -1,12 +1,8 @@
-use std::{fs, path::Path};
 use crate::analysis::dto::ReadmeInfo;
+use std::{fs, path::Path};
 
 pub fn scan(project_path: &str) -> ReadmeInfo {
-    let candidates = [
-        "README.md",
-        "Readme.md",
-        "readme.md",
-    ];
+    let candidates = ["README.md", "Readme.md", "readme.md"];
 
     for file in candidates {
         let path = Path::new(project_path).join(file);
@@ -37,11 +33,7 @@ fn parse_readme(content: &str) -> ReadmeInfo {
         let line = line.trim();
 
         if title.is_none() && line.starts_with("# ") {
-            title = Some(
-                line.trim_start_matches("# ")
-                    .trim()
-                    .to_string(),
-            );
+            title = Some(line.trim_start_matches("# ").trim().to_string());
 
             continue;
         }
@@ -52,8 +44,5 @@ fn parse_readme(content: &str) -> ReadmeInfo {
         }
     }
 
-    ReadmeInfo {
-        title,
-        description,
-    }
+    ReadmeInfo { title, description }
 }

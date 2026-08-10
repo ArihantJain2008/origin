@@ -16,6 +16,7 @@ import {
   launchProject,
   revealProject,
 } from "@/features/workspace/services/launcher";
+import { useProjectStore } from "@/features/projects/store/projectStore";
 import {
   removeProject,
   updateProjectFavorite,
@@ -88,6 +89,8 @@ console.log("Health:", analysis?.health);
 */
 
   const handleOpenProject = async () => {
+    useProjectStore.getState().setActiveProject(project.id);
+
     await launchProject(project.id, project.path);
     await refreshApplicationState();
   };

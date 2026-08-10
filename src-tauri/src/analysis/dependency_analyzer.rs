@@ -21,31 +21,18 @@ pub fn scan(project_path: &str) -> Vec<String> {
 
     let mut dependencies = HashSet::new();
 
-    extract_dependencies(
-        &json,
-        "dependencies",
-        &mut dependencies,
-    );
+    extract_dependencies(&json, "dependencies", &mut dependencies);
 
-    extract_dependencies(
-        &json,
-        "devDependencies",
-        &mut dependencies,
-    );
+    extract_dependencies(&json, "devDependencies", &mut dependencies);
 
-    let mut result: Vec<String> =
-        dependencies.into_iter().collect();
+    let mut result: Vec<String> = dependencies.into_iter().collect();
 
     result.sort();
 
     result
 }
 
-fn extract_dependencies(
-    json: &Value,
-    key: &str,
-    output: &mut HashSet<String>,
-) {
+fn extract_dependencies(json: &Value, key: &str, output: &mut HashSet<String>) {
     let Some(object) = json.get(key).and_then(|v| v.as_object()) else {
         return;
     };

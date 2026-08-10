@@ -14,6 +14,7 @@ import {
 } from "@/features/workspace/services/launcher";
 
 import { ProjectDetailsModel } from "../model/projectDetailsModel";
+import { useProjectStore } from "@/features/projects/store/projectStore";
 
 interface ProjectQuickActionsProps {
   model: ProjectDetailsModel;
@@ -31,10 +32,9 @@ export default function ProjectQuickActions({
   );
 
   const handleOpenProject = async () => {
-    await launchProject(
-      model.project.id,
-      model.project.path
-    );
+    useProjectStore.getState().setActiveProject(model.project.id);
+
+    await launchProject(model.project.id, model.project.path);
 
     await refreshApplicationState();
   };

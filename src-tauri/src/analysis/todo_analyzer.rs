@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use regex::Regex;
 use walkdir::WalkDir;
 
-use crate::analysis::dto::{TodoItem};
+use crate::analysis::dto::TodoItem;
 
 pub fn scan(path: &str) -> Result<Vec<TodoItem>, String> {
     // Matches:
@@ -14,10 +14,7 @@ pub fn scan(path: &str) -> Result<Vec<TodoItem>, String> {
     // /* TODO:
     // * TODO:
     // -- TODO:
-    let todo_regex = Regex::new(
-        r#"^\s*(//|#|--|/\*|\*)\s*(TODO|FIXME|HACK)\s*:(.*)$"#
-    )
-    .unwrap();
+    let todo_regex = Regex::new(r#"^\s*(//|#|--|/\*|\*)\s*(TODO|FIXME|HACK)\s*:(.*)$"#).unwrap();
 
     let mut todos = Vec::new();
 

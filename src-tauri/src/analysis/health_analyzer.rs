@@ -1,6 +1,4 @@
-use crate::analysis::{
-    dto::{HealthInfo, ReadmeInfo, StatsInfo, TodoItem},
-};
+use crate::analysis::dto::{HealthInfo, ReadmeInfo, StatsInfo, TodoItem};
 
 pub fn calculate(
     todos: &[TodoItem],

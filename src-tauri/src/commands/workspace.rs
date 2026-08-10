@@ -1,9 +1,6 @@
 use tauri::State;
 
-use crate::{
-    database::database::Database,
-    services::workspace_service,
-};
+use crate::{database::database::Database, services::workspace_service};
 
 #[tauri::command]
 pub fn launch_project(
@@ -11,16 +8,10 @@ pub fn launch_project(
     id: String,
     path: String,
 ) -> Result<(), String> {
-    workspace_service::launch_project(
-        &database,
-        id,
-        path,
-    )
+    workspace_service::launch_project(&database, id, path)
 }
 
 #[tauri::command]
-pub fn reveal_project(
-    path: String,
-) -> Result<(), String> {
+pub fn reveal_project(path: String) -> Result<(), String> {
     workspace_service::reveal_project(path)
 }

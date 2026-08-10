@@ -40,6 +40,10 @@
     },
 
     "shell:default",
-    "shell:allow-execute"
+    "shell:allow-execute",
+    "global-shortcut:allow-is-registered",
+"global-shortcut:allow-register",
+"global-shortcut:allow-unregister",
+"core:webview:allow-create-webview-window"
   ]
 }

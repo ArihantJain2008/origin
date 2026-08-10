@@ -13,14 +13,8 @@ pub fn load_projects(database: State<'_, Database>) -> Result<Vec<ProjectDto>, S
 }
 
 #[tauri::command]
-pub fn remove_project(
-    database: State<'_, Database>,
-    id: String,
-) -> Result<(), String> {
-    project_service::remove_project(
-        &database,
-        id,
-    )
+pub fn remove_project(database: State<'_, Database>, id: String) -> Result<(), String> {
+    project_service::remove_project(&database, id)
 }
 
 #[tauri::command]
@@ -29,9 +23,5 @@ pub fn update_project_favorite(
     id: String,
     favorite: bool,
 ) -> Result<(), String> {
-    project_service::update_project_favorite(
-        &database,
-        id,
-        favorite,
-    )
+    project_service::update_project_favorite(&database, id, favorite)
 }

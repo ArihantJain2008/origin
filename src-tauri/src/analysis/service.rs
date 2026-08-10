@@ -1,14 +1,7 @@
-use crate::analysis::{
-    dto::AnalysisDto,
-    analyzer,
-};
+use crate::analysis::{analyzer, dto::AnalysisDto};
 
-pub fn analyze_project(
-    path: &str,
-) -> Result<AnalysisDto, String> {
-
-    let analysis =
-        analyzer::scan(path)?;
+pub fn analyze_project(path: &str) -> Result<AnalysisDto, String> {
+    let analysis = analyzer::scan(path)?;
 
     Ok(analysis)
 }
