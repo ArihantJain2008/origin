@@ -1,6 +1,6 @@
 use serde::Serialize;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 #[derive(Debug, Serialize)]
 pub struct FolderEntry {
