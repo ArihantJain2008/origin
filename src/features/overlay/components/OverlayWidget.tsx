@@ -152,8 +152,9 @@ export default function OverlayWidget({
   };
 
   return (
-    <div
-      onPointerDown={handlePointerDown}
+  <div
+    data-overlay-widget
+    onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       style={{

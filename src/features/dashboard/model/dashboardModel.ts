@@ -3,11 +3,8 @@ import { Project } from "@/features/projects/types/project";
 
 export interface DashboardSummary {
   totalProjects: number;
-
   healthyProjects: number;
-
   modifiedProjects: number;
-
   totalTodos: number;
 }
 
@@ -27,39 +24,38 @@ const HEALTHY_SCORE = 80;
 
 function getDashboardSummary(
   projects: Project[],
-  analysis: Record<string, AnalysisDto>
+  analysis: Record<string, AnalysisDto>,
+  todosByProject: Record<string, { completed: boolean }[]>
 ): DashboardSummary {
   let healthyProjects = 0;
-
   let modifiedProjects = 0;
-
   let totalTodos = 0;
 
   projects.forEach((project) => {
     const projectAnalysis = analysis[project.id];
 
-    if (!projectAnalysis) {
-      return;
-    }
-
-    if (projectAnalysis.health.score >= HEALTHY_SCORE) {
-      healthyProjects++;
+    if (projectAnalysis) {
+      if (projectAnalysis.health.score >= HEALTHY_SCORE) {
+        healthyProjects++;
+      }
     }
 
     if (project.gitDirty) {
       modifiedProjects++;
     }
 
-    totalTodos += projectAnalysis.todos.length;
+    const projectTodos =
+      todosByProject[project.path] ?? [];
+
+    totalTodos += projectTodos.filter(
+      (todo) => !todo.completed
+    ).length;
   });
 
   return {
     totalProjects: projects.length,
-
     healthyProjects,
-
     modifiedProjects,
-
     totalTodos,
   };
 }
@@ -132,11 +128,22 @@ function getDashboardInsights(
 export function buildDashboardModel(
   projects: Project[],
   analysis: Record<string, AnalysisDto>,
-  loading: Record<string, boolean>
+  loading: Record<string, boolean>,
+  todosByProject: Record<string, { completed: boolean }[]>
 ): DashboardModel {
   return {
-    summary: getDashboardSummary(projects, analysis),
-    insights: getDashboardInsights(projects, analysis),
-    isAnalyzing: Object.values(loading).some(Boolean),
+    summary: getDashboardSummary(
+      projects,
+      analysis,
+      todosByProject
+    ),
+
+    insights: getDashboardInsights(
+      projects,
+      analysis
+    ),
+
+    isAnalyzing:
+      Object.values(loading).some(Boolean),
   };
 }

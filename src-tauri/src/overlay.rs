@@ -124,22 +124,20 @@ fn create_overlay_window(
                         );
                     }
 
-                    tauri::WindowEvent::Focused(
-                        false,
-                    ) => {
-                        println!(
-                            "[OVERLAY] Focused false -> hide"
-                        );
+                    tauri::WindowEvent::Focused(false) => {
+    println!(
+        "[OVERLAY] Focus lost -> hiding overlay"
+    );
 
-                        if let Err(error) =
-                            callback_window.hide()
-                        {
-                            eprintln!(
-                                "[OVERLAY] failed to hide overlay after focus loss: {}",
-                                error
-                            );
-                        }
-                    }
+    if let Err(error) =
+        callback_window.hide()
+    {
+        eprintln!(
+            "[OVERLAY] failed to hide overlay: {}",
+            error
+        );
+    }
+}
 
                     tauri::WindowEvent::CloseRequested {
                         ..

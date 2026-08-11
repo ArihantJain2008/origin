@@ -338,6 +338,9 @@ pub fn run() {
                 commands::media::media_next,
                 commands::media::media_previous,
 
+                // Folders
+                commands::folder::read_folder_contents,
+
                 // System
                 commands::system::system_get_stats,
             ],

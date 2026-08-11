@@ -6,3 +6,4 @@ pub mod workspace;
 pub mod git;
 pub mod media;
 pub mod system;
+pub mod folder;

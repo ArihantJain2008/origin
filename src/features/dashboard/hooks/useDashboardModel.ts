@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import { useAnalysisStore } from "@/features/analysis/store/analysisStore";
 import { useProjectStore } from "@/features/projects/store/projectStore";
+import { useTodosStore } from "@/features/overlay/store/todosStore";
 
 import { buildDashboardModel } from "../model/dashboardModel";
 
@@ -10,6 +11,10 @@ export function useDashboardModel() {
 
   const analysis = useAnalysisStore((state) => state.analysis);
   const loading = useAnalysisStore((state) => state.loading);
+
+  const todosByProject = useTodosStore(
+  (state) => state.todosByProject
+);
 
   // ======================================================
   // DEBUG (Sprint 6 - Dashboard Stabilization)
@@ -26,7 +31,7 @@ export function useDashboardModel() {
   */
 
   return useMemo(
-    () => buildDashboardModel(projects, analysis, loading),
+    () => buildDashboardModel(projects, analysis, loading,todosByProject),
     [projects, analysis, loading]
   );
 }

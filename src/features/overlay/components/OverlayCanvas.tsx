@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import OverlayWidget from "./OverlayWidget";
 
@@ -7,6 +8,7 @@ import TodosWidget from "./widgets/TodosWidget";
 import ProjectWidget from "./widgets/ProjectWidget";
 import MusicWidget from "@/features/music/components/MusicWidget";
 import GitWidget from "./widgets/GitWidget";
+import { useTodosStore } from "@/features/overlay/store/todosStore";
 
 import SearchBar from "./SearchBar";
 import SettingsPanel from "./SettingsPanel";
@@ -125,6 +127,17 @@ export default function OverlayCanvas() {
   const [settingsOpen, setSettingsOpen] =
     useState(false);
 
+    async function closeOverlay() {
+  try {
+    await getCurrentWindow().hide();
+  } catch (error) {
+    console.error(
+      "[OVERLAY] failed to hide from background click:",
+      error
+    );
+  }
+}
+
   useEffect(() => {
     function handleError(
       event: ErrorEvent
@@ -158,6 +171,36 @@ export default function OverlayCanvas() {
       "unhandledrejection",
       handleUnhandledRejection
     );
+
+    document.addEventListener(
+    "pointerdown",
+    handleOutsidePointerDown,
+    true
+  );
+
+    function handleOutsidePointerDown(event: PointerEvent) {
+  const target = event.target as HTMLElement | null;
+
+  if (!target) {
+    return;
+  }
+
+  const insideOverlayUI =
+    target.closest("[data-overlay-ui]") ||
+    target.closest("[data-overlay-widget]");
+
+  if (insideOverlayUI) {
+    return;
+  }
+
+  void closeOverlay();
+}
+
+document.addEventListener(
+  "pointerdown",
+  handleOutsidePointerDown,
+  true
+);
 
     return () => {
       console.log(
@@ -319,6 +362,16 @@ export default function OverlayCanvas() {
         project.id === activeProjectId
     ) ?? null;
 
+    const pendingTodoCount = useTodosStore((state) => {
+  if (!activeProject?.path) {
+    return 0;
+  }
+
+  return (state.todosByProject[activeProject.path] ?? []).filter(
+    (todo) => !todo.completed
+  ).length;
+});
+
   /*
    * ==========================================
    * RENDER
@@ -339,15 +392,16 @@ export default function OverlayCanvas() {
          ====================================== */}
 
       <div
-        className="
-          pointer-events-auto
-          fixed
-          left-1/2
-          top-5
-          z-50
-          -translate-x-1/2
-        "
-      >
+  data-overlay-ui
+  className="
+    pointer-events-auto
+    fixed
+    left-1/2
+    top-5
+    z-50
+    -translate-x-1/2
+  "
+>
         <SearchBar />
       </div>
 
@@ -356,14 +410,15 @@ export default function OverlayCanvas() {
          ====================================== */}
 
       <div
-        className="
-          pointer-events-auto
-          fixed
-          right-6
-          top-6
-          z-50
-        "
-      >
+  data-overlay-ui
+  className="
+    pointer-events-auto
+    fixed
+    right-6
+    top-6
+    z-50
+  "
+>
         <button
           type="button"
           onClick={() =>

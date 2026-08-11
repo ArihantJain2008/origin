@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { Project } from "../types/project";
+import { useTodosStore } from "@/features/overlay/store/todosStore";
 import {
   launchProject,
   revealProject,
@@ -45,6 +46,14 @@ export default function ProjectCard({
 
   const analysis = useAnalysisStore(
   (state) => state.analysis[project.id]
+);
+
+const remainingTodoCount = useTodosStore(
+  (state) =>
+    (state.todosByProject[project.path] ?? []).reduce(
+      (count, todo) => count + (todo.completed ? 0 : 1),
+      0
+    )
 );
 
 const navigate = useNavigate();
@@ -496,23 +505,27 @@ console.log("Health:", analysis?.health);
 ) : (
   analysis && (
     <div className="mt-3">
-      {/* TODO Status */}
-      <div className="flex flex-wrap gap-2">
-        {analysis.todos.length === 0 ? (
-          <Badge tone="success">
-            No TODOs detected
-          </Badge>
-        ) : (
-          <Badge tone="neutral">
-            <ListTodo
-              size={12}
-              className="mr-1"
-            />
-            {analysis.todos.length} TODO
-            {analysis.todos.length !== 1 ? "s" : ""}
-          </Badge>
-        )}
-      </div>
+      {/* User TODO Status */}
+<div className="flex flex-wrap gap-2">
+  {remainingTodoCount === 0 ? (
+    <Badge tone="success">
+      <ListTodo
+        size={12}
+        className="mr-1"
+      />
+      No active TODOs
+    </Badge>
+  ) : (
+    <Badge tone="neutral">
+      <ListTodo
+        size={12}
+        className="mr-1"
+      />
+      {remainingTodoCount} TODO
+      {remainingTodoCount !== 1 ? "s" : ""}
+    </Badge>
+  )}
+</div>
 
       {/* Dependencies */}
       <div className="mt-2 flex flex-wrap gap-2">
