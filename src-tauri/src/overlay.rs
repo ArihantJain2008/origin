@@ -7,13 +7,18 @@ use tauri::{
 
 const OVERLAY_LABEL: &str = "overlay";
 
-pub fn toggle_overlay(app: &AppHandle, detected_project_path: Option<String>) {
+pub fn toggle_overlay(
+    app: &AppHandle,
+    detected_project_path: Option<String>,
+) {
     if let Some(window) =
         app.get_webview_window(OVERLAY_LABEL)
     {
         match window.is_visible() {
             Ok(true) => {
-                println!("[OVERLAY] toggle requested -> hide");
+                println!(
+                    "[OVERLAY] toggle requested -> hide"
+                );
 
                 if let Err(error) = window.hide() {
                     eprintln!(
@@ -24,7 +29,9 @@ pub fn toggle_overlay(app: &AppHandle, detected_project_path: Option<String>) {
             }
 
             Ok(false) => {
-                println!("[OVERLAY] toggle requested -> show");
+                println!(
+                    "[OVERLAY] toggle requested -> show"
+                );
 
                 if let Err(error) = window.show() {
                     eprintln!(
@@ -35,7 +42,9 @@ pub fn toggle_overlay(app: &AppHandle, detected_project_path: Option<String>) {
                     return;
                 }
 
-                if let Err(error) = window.set_focus() {
+                if let Err(error) =
+                    window.set_focus()
+                {
                     eprintln!(
                         "[OVERLAY] failed to focus overlay: {}",
                         error
@@ -64,7 +73,9 @@ fn create_overlay_window(
     app: &AppHandle,
     _detected_project_path: Option<String>,
 ) {
-    println!("[OVERLAY] creating overlay window");
+    println!(
+        "[OVERLAY] creating fullscreen overlay window"
+    );
 
     let result = WebviewWindowBuilder::new(
         app,
@@ -74,8 +85,7 @@ fn create_overlay_window(
         ),
     )
     .title("Origin Overlay")
-    .inner_size(1400.0, 900.0)
-    .position(0.0, 0.0)
+    .fullscreen(true)
     .transparent(true)
     .background_color(
         tauri::window::Color(
@@ -98,7 +108,7 @@ fn create_overlay_window(
     match result {
         Ok(window) => {
             println!(
-                "[OVERLAY] overlay window created"
+                "[OVERLAY] fullscreen overlay created"
             );
 
             let callback_window =
@@ -152,7 +162,7 @@ fn create_overlay_window(
 
         Err(error) => {
             eprintln!(
-                "[OVERLAY] failed to create overlay window: {}",
+                "[OVERLAY] failed to create overlay: {}",
                 error
             );
         }

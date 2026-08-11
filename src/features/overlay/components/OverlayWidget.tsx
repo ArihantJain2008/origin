@@ -23,13 +23,11 @@ export default function OverlayWidget({
     (state) => state.widgets[id]
   );
 
-  const updateWidgetPosition =
-    useOverlayStore(
-      (state) => state.updateWidgetPosition
-    );
+  const updateWidgetPosition = useOverlayStore(
+    (state) => state.updateWidgetPosition
+  );
 
-  const [dragging, setDragging] =
-    useState(false);
+  const [dragging, setDragging] = useState(false);
 
   const dragOffset = useRef({
     x: 0,
@@ -45,10 +43,9 @@ export default function OverlayWidget({
   ) => {
     const target = event.target as HTMLElement;
 
-    const dragHandle =
-      target.closest(
-        "[data-overlay-drag-handle]"
-      );
+    const dragHandle = target.closest(
+      "[data-overlay-drag-handle]"
+    );
 
     if (!dragHandle) {
       return;
@@ -56,25 +53,15 @@ export default function OverlayWidget({
 
     event.preventDefault();
 
-    const element =
-      event.currentTarget;
-
-    const rect =
-      element.getBoundingClientRect();
+    const element = event.currentTarget;
+    const rect = element.getBoundingClientRect();
 
     dragOffset.current = {
-      x:
-        event.clientX -
-        rect.left,
-
-      y:
-        event.clientY -
-        rect.top,
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
     };
 
-    element.setPointerCapture(
-      event.pointerId
-    );
+    element.setPointerCapture(event.pointerId);
 
     setDragging(true);
   };
@@ -86,18 +73,61 @@ export default function OverlayWidget({
       return;
     }
 
-    const x =
+    const element = event.currentTarget;
+    const rect = element.getBoundingClientRect();
+
+    /*
+     * Current widget dimensions.
+     * We use the actual rendered size instead of
+     * assuming a fixed widget width/height.
+     */
+    const widgetWidth = rect.width;
+    const widgetHeight = rect.height;
+
+    /*
+     * Full overlay viewport.
+     *
+     * Because the Tauri overlay will now be fullscreen,
+     * these correspond to the actual available screen area.
+     */
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const rawX =
       event.clientX -
       dragOffset.current.x;
 
-    const y =
+    const rawY =
       event.clientY -
       dragOffset.current.y;
 
+    /*
+     * Keep the ENTIRE widget inside the viewport.
+     */
+    const maxX = Math.max(
+      0,
+      viewportWidth - widgetWidth
+    );
+
+    const maxY = Math.max(
+      0,
+      viewportHeight - widgetHeight
+    );
+
+    const x = Math.min(
+      Math.max(0, rawX),
+      maxX
+    );
+
+    const y = Math.min(
+      Math.max(0, rawY),
+      maxY
+    );
+
     updateWidgetPosition(
       id,
-      Math.max(0, x),
-      Math.max(0, y)
+      x,
+      y
     );
   };
 
@@ -135,9 +165,7 @@ export default function OverlayWidget({
       }}
       className={`
         select-none
-        ${dragging
-          ? "cursor-grabbing"
-          : ""}
+        ${dragging ? "cursor-grabbing" : ""}
         ${className}
       `}
     >
