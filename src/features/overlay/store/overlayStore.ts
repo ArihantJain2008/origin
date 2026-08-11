@@ -92,6 +92,15 @@ const defaultWidgets: Record<
     },
     visible: true,
   },
+
+  git: {
+    id: "git",
+    position: {
+      x: 420,
+      y: 420,
+    },
+    visible: true,
+  },
 };
 
 export const useOverlayStore =

@@ -6,6 +6,7 @@ import NotesWidget from "./widgets/NotesWidget";
 import TodosWidget from "./widgets/TodosWidget";
 import ProjectWidget from "./widgets/ProjectWidget";
 import MusicWidget from "@/features/music/components/MusicWidget";
+import GitWidget from "./widgets/GitWidget";
 
 import SearchBar from "./SearchBar";
 import SettingsPanel from "./SettingsPanel";
@@ -123,6 +124,57 @@ function WidgetShell({
 export default function OverlayCanvas() {
   const [settingsOpen, setSettingsOpen] =
     useState(false);
+
+  useEffect(() => {
+    function handleError(
+      event: ErrorEvent
+    ) {
+      console.error(
+        "[OVERLAY] window error",
+        event.message,
+        event.error
+      );
+    }
+
+    function handleUnhandledRejection(
+      event: PromiseRejectionEvent
+    ) {
+      console.error(
+        "[OVERLAY] unhandled rejection",
+        event.reason
+      );
+    }
+
+    console.log(
+      "[OVERLAY] React overlay mounted"
+    );
+
+    window.addEventListener(
+      "error",
+      handleError
+    );
+
+    window.addEventListener(
+      "unhandledrejection",
+      handleUnhandledRejection
+    );
+
+    return () => {
+      console.log(
+        "[OVERLAY] React overlay unmounted"
+      );
+
+      window.removeEventListener(
+        "error",
+        handleError
+      );
+
+      window.removeEventListener(
+        "unhandledrejection",
+        handleUnhandledRejection
+      );
+    };
+  }, []);
 
   const accent = useOverlayStore(
     (state) => state.accentColor
@@ -397,16 +449,28 @@ export default function OverlayCanvas() {
       </div>
 
       {/* ======================================
-          PROJECT + GIT + RUN COMMANDS
-         ====================================== */}
+    PROJECT
+   ====================================== */}
 
-      <div className="pointer-events-auto">
-        <OverlayWidget id="project">
-          <WidgetShell title="Project">
-            <ProjectWidget />
-          </WidgetShell>
-        </OverlayWidget>
-      </div>
+<div className="pointer-events-auto">
+  <OverlayWidget id="project">
+    <WidgetShell title="Project">
+      <ProjectWidget />
+    </WidgetShell>
+  </OverlayWidget>
+</div>
+
+{/* ======================================
+    GIT
+   ====================================== */}
+
+<div className="pointer-events-auto">
+  <OverlayWidget id="git">
+    <WidgetShell title="Git">
+      <GitWidget />
+    </WidgetShell>
+  </OverlayWidget>
+</div>
 
       {/* ==========================================
     SYSTEM STATUS BAR

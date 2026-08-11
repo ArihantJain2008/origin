@@ -13,34 +13,31 @@ pub fn toggle_overlay(app: &AppHandle, detected_project_path: Option<String>) {
     {
         match window.is_visible() {
             Ok(true) => {
-                println!("Origin overlay → hide");
+                println!("[OVERLAY] toggle requested -> hide");
 
                 if let Err(error) = window.hide() {
                     eprintln!(
-                        "Failed to hide Origin overlay: {}",
+                        "[OVERLAY] failed to hide overlay: {}",
                         error
                     );
                 }
             }
 
             Ok(false) => {
-                println!("Origin overlay → show");
+                println!("[OVERLAY] toggle requested -> show");
 
                 if let Err(error) = window.show() {
                     eprintln!(
-                        "Failed to show Origin overlay: {}",
+                        "[OVERLAY] failed to show overlay: {}",
                         error
                     );
 
                     return;
                 }
 
-                // No direct project-context emission. Frontend will invoke the
-                // `get_active_project_context` command when it gains focus.
-
                 if let Err(error) = window.set_focus() {
                     eprintln!(
-                        "Failed to focus Origin overlay: {}",
+                        "[OVERLAY] failed to focus overlay: {}",
                         error
                     );
                 }
@@ -48,20 +45,26 @@ pub fn toggle_overlay(app: &AppHandle, detected_project_path: Option<String>) {
 
             Err(error) => {
                 eprintln!(
-                    "Failed to check Origin overlay: {}",
+                    "[OVERLAY] failed to read visibility: {}",
                     error
                 );
             }
         }
 
-            return;
+        return;
     }
 
-        create_overlay_window(app, detected_project_path);
+    create_overlay_window(
+        app,
+        detected_project_path,
+    );
 }
 
-    fn create_overlay_window(app: &AppHandle, _detected_project_path: Option<String>) {
-    println!("Creating Origin overlay...");
+fn create_overlay_window(
+    app: &AppHandle,
+    _detected_project_path: Option<String>,
+) {
+    println!("[OVERLAY] creating overlay window");
 
     let result = WebviewWindowBuilder::new(
         app,
@@ -74,10 +77,15 @@ pub fn toggle_overlay(app: &AppHandle, detected_project_path: Option<String>) {
     .inner_size(1400.0, 900.0)
     .position(0.0, 0.0)
     .transparent(true)
-.background_color(
-    tauri::window::Color(0, 0, 0, 0)
-)
-.decorations(false)
+    .background_color(
+        tauri::window::Color(
+            0,
+            0,
+            0,
+            0,
+        ),
+    )
+    .decorations(false)
     .always_on_top(true)
     .skip_taskbar(true)
     .resizable(false)
@@ -90,44 +98,61 @@ pub fn toggle_overlay(app: &AppHandle, detected_project_path: Option<String>) {
     match result {
         Ok(window) => {
             println!(
-                "Origin overlay created successfully"
+                "[OVERLAY] overlay window created"
             );
-
-            // No emission here; frontend will invoke the Tauri command to pull the
-            // currently stored project context when the overlay is shown/focused.
-
-            // If we were given a detected project context earlier via app state,
-            // it will be emitted by the caller just after creating/showing the window.
 
             let callback_window =
                 window.clone();
 
             window.on_window_event(
-                move |event| {
-                    if let tauri::WindowEvent::Focused(
-                        false,
-                    ) = event
-                    {
+                move |event| match event {
+                    tauri::WindowEvent::Focused(
+                        true,
+                    ) => {
                         println!(
-                            "Origin overlay lost focus → hide"
+                            "[OVERLAY] Focused true"
+                        );
+                    }
+
+                    tauri::WindowEvent::Focused(
+                        false,
+                    ) => {
+                        println!(
+                            "[OVERLAY] Focused false -> hide"
                         );
 
                         if let Err(error) =
                             callback_window.hide()
                         {
                             eprintln!(
-                                "Failed to hide Origin overlay: {}",
+                                "[OVERLAY] failed to hide overlay after focus loss: {}",
                                 error
                             );
                         }
                     }
+
+                    tauri::WindowEvent::CloseRequested {
+                        ..
+                    } => {
+                        println!(
+                            "[OVERLAY] CloseRequested"
+                        );
+                    }
+
+                    tauri::WindowEvent::Destroyed => {
+                        println!(
+                            "[OVERLAY] Destroyed"
+                        );
+                    }
+
+                    _ => {}
                 },
             );
         }
 
         Err(error) => {
             eprintln!(
-                "Failed to create Origin overlay: {}",
+                "[OVERLAY] failed to create overlay window: {}",
                 error
             );
         }

@@ -117,6 +117,12 @@ export const useMusicStore =
 
       {
         name: "origin-music-settings",
+        partialize: (state) => ({
+          provider:
+            state.provider,
+          volume:
+            state.volume,
+        }),
       }
     )
   );

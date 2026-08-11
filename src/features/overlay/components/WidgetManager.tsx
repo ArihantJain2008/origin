@@ -15,6 +15,7 @@ const widgetLabels: Record<
   todos: "Todos",
   project: "Project",
   music: "Music",
+  git: "Git",
 };
 
 const widgetDescriptions: Record<
@@ -25,6 +26,7 @@ const widgetDescriptions: Record<
   todos: "Tasks and reminders",
   project: "Current project status",
   music: "Music controls",
+  git: "Git status and controls",
 };
 
 export default function WidgetManager() {

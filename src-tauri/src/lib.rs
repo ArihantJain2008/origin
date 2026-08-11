@@ -6,6 +6,11 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+#[tauri::command]
+fn debug_log(message: String) {
+    println!("[FRONTEND] {}", message);
+}
+
 mod analysis;
 mod commands;
 mod database;
@@ -31,6 +36,8 @@ use tauri_plugin_global_shortcut::{
     Shortcut,
     ShortcutState,
 };
+
+const DEBUG_OPEN_OVERLAY_ON_STARTUP: bool = false;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -249,6 +256,17 @@ pub fn run() {
                 "Origin system tray initialized."
             );
 
+            if DEBUG_OPEN_OVERLAY_ON_STARTUP {
+                println!(
+                    "[OVERLAY] debug startup open requested"
+                );
+
+                overlay::toggle_overlay(
+                    &app.handle(),
+                    None,
+                );
+            }
+
             Ok(())
         })
 
@@ -281,6 +299,7 @@ pub fn run() {
 
                 // General
                 greet,
+                debug_log,
 
                 // Workspace
                 commands::workspace::launch_project,
@@ -315,12 +334,9 @@ pub fn run() {
                 commands::git::git_changes,
 
                 // Media
-                commands::media::media_get_current,
-                commands::media::media_play,
-                commands::media::media_pause,
+                commands::media::media_play_pause,
                 commands::media::media_next,
                 commands::media::media_previous,
-                commands::media::media_seek,
 
                 // System
                 commands::system::system_get_stats,

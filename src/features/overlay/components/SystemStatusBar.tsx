@@ -6,7 +6,6 @@ interface SystemStats {
   memoryUsed: number;
   memoryTotal: number;
   memoryUsage: number;
-  temperature: number | null;
 }
 
 export default function SystemStatusBar() {
@@ -202,13 +201,6 @@ export default function SystemStatusBar() {
         )}%`
       : "--";
 
-  const temperatureText =
-    stats?.temperature != null
-      ? `${Math.round(
-          stats.temperature
-        )}°C`
-      : "N/A";
-
   return (
     <button
       type="button"
@@ -276,13 +268,6 @@ export default function SystemStatusBar() {
             ·
           </span>
 
-          <span>
-            TEMP{" "}
-            <strong className="font-medium text-white/65">
-              {temperatureText}
-            </strong>
-          </span>
-
           <span className="text-white/15">
             ·
           </span>
@@ -317,9 +302,6 @@ export default function SystemStatusBar() {
             ·
           </span>
 
-          <span>
-            {temperatureText}
-          </span>
 
           <span className="text-white/15">
             ·

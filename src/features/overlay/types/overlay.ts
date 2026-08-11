@@ -2,7 +2,8 @@ export type OverlayWidgetId =
   | "notes"
   | "music"
   | "todos"
-  | "project";
+  | "project"
+  | "git";
 
 export interface WidgetPosition {
   x: number;
