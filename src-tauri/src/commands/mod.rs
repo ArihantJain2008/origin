@@ -1,9 +1,9 @@
 pub mod analysis;
-pub mod projects;
-pub mod processes;
-pub mod settings;
-pub mod workspace;
+pub mod folder;
 pub mod git;
 pub mod media;
+pub mod processes;
+pub mod projects;
+pub mod settings;
 pub mod system;
-pub mod folder;
+pub mod workspace;

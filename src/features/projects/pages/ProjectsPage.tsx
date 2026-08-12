@@ -57,6 +57,8 @@ import {
   useProjectFolderStore,
 } from "@/features/projects/store/projectFolderStore";
 
+import { invoke } from "@tauri-apps/api/core";
+
 
 function normalizePath(path: string) {
   return path
@@ -251,6 +253,8 @@ export default function ProjectsPage() {
       (project) => {
         const query =
           searchQuery.toLowerCase();
+
+          
 
         return (
           project.name
@@ -567,6 +571,25 @@ export default function ProjectsPage() {
 
     setFolderContentsError(null);
   };
+
+  const handleOpenDetectedProject = async (
+  path: string
+) => {
+  try {
+    await invoke("open_path_in_editor", {
+      path,
+    });
+  } catch (error) {
+    console.error(
+      "[PROJECT] Failed to open project:",
+      error
+    );
+
+    window.alert(
+      `Failed to open project:\n${error}`
+    );
+  }
+};
 
     return (
     <div className="mx-auto max-w-7xl px-6 py-8">
@@ -1018,175 +1041,106 @@ export default function ProjectsPage() {
 
                 <div className="space-y-2">
 
-                  {folderContents.map(
-                    (entry) => {
+                  {folderContents.map((entry) => {
+  const isFolder = entry.kind === "folder";
+  const isProject = entry.isProject;
 
-                      /*
-                       * Check whether this filesystem
-                       * folder is already registered
-                       * as an Origin project.
-                       */
+  return (
+    <div
+      key={entry.path}
+      className="
+        group
+        flex
+        items-center
+        gap-3
+        rounded-[10px]
+        border
+        border-[var(--color-border-subtle)]
+        bg-[var(--color-bg-surface)]
+        px-4
+        py-3
+        transition
+        hover:bg-[var(--color-bg-elevated)]
+      "
+    >
+      {/* Main entry */}
 
-                      const matchingProject =
-                        entry.kind === "folder"
-                          ? projects.find(
-                              (project) =>
-                                normalizePath(
-                                  project.path
-                                ) ===
-                                normalizePath(
-                                  entry.path
-                                )
-                            )
-                          : null;
+      <button
+  type="button"
+  onClick={() => {
+    if (isProject) {
+      void handleOpenDetectedProject(entry.path);
+      return;
+    }
 
-                      /*
-                       * Registered project
-                       *
-                       * Render the actual ProjectCard
-                       * rather than treating it like
-                       * an ordinary folder.
-                       */
+    if (isFolder) {
+      void handleOpenSubfolder(entry.path);
+    }
+  }}
+  className="
+    flex
+    min-w-0
+    flex-1
+    items-center
+    gap-3
+    text-left
+    cursor-pointer
+  "
+>
+  {isFolder ? (
+    <Folder
+      size={17}
+      className={
+        isProject
+          ? "shrink-0 text-[var(--color-accent)]"
+          : "shrink-0 text-[var(--color-text-secondary)]"
+      }
+    />
+  ) : (
+    <FileText
+      size={16}
+      className="shrink-0 text-[var(--color-text-tertiary)]"
+    />
+  )}
 
-                      if (
-                        matchingProject
-                      ) {
-                        return (
-                          <div
-                            key={
-                              entry.path
-                            }
-                            className="rounded-[10px]"
-                          >
+  <div className="min-w-0">
+    <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
+      {entry.name}
+    </p>
 
-                            <ProjectCard
-                              project={
-                                matchingProject
-                              }
-                              view="list"
-                            />
+    {isProject && entry.projectType && (
+      <p className="mt-0.5 truncate text-[10px] text-[var(--color-text-tertiary)]">
+        {entry.projectType}
+      </p>
+    )}
+  </div>
+</button>
 
-                          </div>
-                        );
-                      }
+      {/* Project action */}
 
-                      /*
-                       * Normal filesystem
-                       * folder.
-                       */
+      {isProject && (
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() =>
+            handleOpenDetectedProject(entry.path)
+          }
+        >
+          Open in Editor
+        </Button>
+      )}
 
-                      if (
-                        entry.kind ===
-                        "folder"
-                      ) {
-                        return (
-                          <button
-                            key={
-                              entry.path
-                            }
-                            type="button"
-                            onClick={() =>
-                              void handleOpenSubfolder(
-                                entry.path
-                              )
-                            }
-                            className="
-                              group
-                              flex
-                              w-full
-                              items-center
-                              gap-3
-                              rounded-[10px]
-                              border
-                              border-transparent
-                              px-4
-                              py-3
-                              text-left
-                              transition
-                              hover:border-[var(--color-border-subtle)]
-                              hover:bg-[var(--color-bg-elevated)]
-                            "
-                          >
+      {/* Normal folder navigation */}
 
-                            <Folder
-                              size={19}
-                              className="
-                                shrink-0
-                                text-[var(--color-text-secondary)]
-                              "
-                            />
-
-                            <div className="min-w-0 flex-1">
-
-                              <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
-                                {entry.name}
-                              </p>
-
-                              <p className="mt-0.5 text-[10px] text-[var(--color-text-tertiary)]">
-                                Folder
-                              </p>
-
-                            </div>
-
-                            <ChevronRight
-                              size={16}
-                              className="
-                                shrink-0
-                                text-[var(--color-text-tertiary)]
-                                transition
-                                group-hover:translate-x-0.5
-                              "
-                            />
-
-                          </button>
-                        );
-                      }
-
-                      /*
-                       * Normal file.
-                       */
-
-                      return (
-                        <div
-                          key={
-                            entry.path
-                          }
-                          className="
-                            flex
-                            items-center
-                            gap-3
-                            rounded-[10px]
-                            px-4
-                            py-3
-                            transition
-                            hover:bg-[var(--color-bg-elevated)]
-                          "
-                        >
-
-                          <FileText
-                            size={18}
-                            className="
-                              shrink-0
-                              text-[var(--color-text-tertiary)]
-                            "
-                          />
-
-                          <div className="min-w-0">
-
-                            <p className="truncate text-sm text-[var(--color-text-primary)]">
-                              {entry.name}
-                            </p>
-
-                            <p className="mt-0.5 text-[10px] text-[var(--color-text-tertiary)]">
-                              File
-                            </p>
-
-                          </div>
-
-                        </div>
-                      );
-                    }
-                  )}
+      {isFolder && !isProject && (
+        <ChevronRight
+          size={15}
+          className="shrink-0 text-[var(--color-text-tertiary)]"
+        />
+      )}
+    </div>
+  );
+})}
 
                 </div>
               )}

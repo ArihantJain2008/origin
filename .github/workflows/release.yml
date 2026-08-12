@@ -1,0 +1,106 @@
+name: Release Origin
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          # Windows
+          - platform: windows-latest
+            args: ""
+
+          # macOS Apple Silicon
+          - platform: macos-latest
+            args: "--target aarch64-apple-darwin"
+
+          # macOS Intel
+          - platform: macos-latest
+            args: "--target x86_64-apple-darwin"
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      # ---------------------------------------------
+      # Checkout
+      # ---------------------------------------------
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ---------------------------------------------
+      # Node
+      # ---------------------------------------------
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      # ---------------------------------------------
+      # Rust
+      # ---------------------------------------------
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      # ---------------------------------------------
+      # Dependencies
+      # ---------------------------------------------
+
+      - name: Install dependencies
+        run: npm install
+
+      # ---------------------------------------------
+      # Build + Release
+      # ---------------------------------------------
+
+      - name: Build and publish Origin
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+        with:
+          tagName: v__VERSION__
+
+          releaseName: "Origin v__VERSION__"
+
+          releaseBody: |
+            ## Origin v__VERSION__
+
+            Download the installer for your platform below.
+
+            ### What's included
+
+            - Folder browser improvements
+            - Project detection improvements
+            - macOS support
+            - Performance improvements
+            - Bug fixes
+
+          releaseDraft: false
+
+          prerelease: false
+
+          generateReleaseNotes: true
+
+          uploadUpdaterJson: true
+
+          uploadUpdaterSignatures: true
+
+          args: ${{ matrix.args }}

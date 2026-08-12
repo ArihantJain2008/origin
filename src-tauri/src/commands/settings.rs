@@ -15,7 +15,10 @@ pub fn load_settings(database: State<'_, Database>) -> Result<SettingsDto, Strin
 }
 
 #[tauri::command]
-pub fn save_active_project(database: State<'_, Database>, id: Option<String>) -> Result<(), String> {
+pub fn save_active_project(
+    database: State<'_, Database>,
+    id: Option<String>,
+) -> Result<(), String> {
     // Persist the active project id (or null) in settings table under key 'active_project_id'
     let val = id.unwrap_or_default();
     crate::database::settings_repository::save_setting(&database, "active_project_id", &val)

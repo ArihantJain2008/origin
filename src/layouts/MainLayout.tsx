@@ -1,6 +1,7 @@
 import { useCommandPalette } from "@/features/command-palette/hooks/useCommandPalette";
 import CommandPalette from "@/features/command-palette/components/CommandPalette";
 import { useAppInitialization } from "@/features/app/hooks/useAppInitialization";
+import UpdateIndicator from "@/features/updater/components/UpdateIndicator";
 
 import Sidebar from "@/components/navigation/Sidebar";
 import { Outlet } from "react-router-dom";
@@ -18,6 +19,8 @@ export default function MainLayout() {
     <main className="min-w-0 flex-1 overflow-auto">
       <Outlet />
     </main>
+
+    <UpdateIndicator />
 
     <CommandPalette />
   </div>

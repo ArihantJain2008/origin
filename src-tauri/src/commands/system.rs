@@ -18,30 +18,22 @@ pub fn system_get_stats() -> SystemStats {
     // CPU usage requires two measurements.
     system.refresh_cpu_usage();
 
-    std::thread::sleep(
-        std::time::Duration::from_millis(100),
-    );
+    std::thread::sleep(std::time::Duration::from_millis(100));
 
     system.refresh_cpu_usage();
     system.refresh_memory();
 
-    let cpu_usage =
-        system.global_cpu_usage();
+    let cpu_usage = system.global_cpu_usage();
 
-    let memory_total =
-        system.total_memory();
+    let memory_total = system.total_memory();
 
-    let memory_used =
-        system.used_memory();
+    let memory_used = system.used_memory();
 
-    let memory_usage =
-        if memory_total > 0 {
-            (memory_used as f32
-                / memory_total as f32)
-                * 100.0
-        } else {
-            0.0
-        };
+    let memory_usage = if memory_total > 0 {
+        (memory_used as f32 / memory_total as f32) * 100.0
+    } else {
+        0.0
+    };
 
     SystemStats {
         cpu_usage,

@@ -35,9 +35,7 @@ pub fn launch_run_command(
     // ---------------------------------------------
 
     if working_directory.trim().is_empty() {
-        return Err(
-            "Working directory cannot be empty".to_string()
-        );
+        return Err("Working directory cannot be empty".to_string());
     }
 
     // ---------------------------------------------
@@ -60,9 +58,7 @@ pub fn launch_run_command(
         //
         // Both become:
         //   \n
-        let normalized_command = command
-            .replace("\r\n", "\n")
-            .replace('\r', "\n");
+        let normalized_command = command.replace("\r\n", "\n").replace('\r', "\n");
 
         // Split the command into individual lines.
         //
@@ -87,9 +83,7 @@ pub fn launch_run_command(
             .collect();
 
         if commands.is_empty() {
-            return Err(
-                "Command cannot be empty".to_string()
-            );
+            return Err("Command cannot be empty".to_string());
         }
 
         // Join all commands into one command sequence.
@@ -109,10 +103,7 @@ pub fn launch_run_command(
         // cd frontend && npm install && npm run dev
         let command_script = commands.join(" && ");
 
-        println!(
-            "Origin launching command sequence:\n{}",
-            command_script
-        );
+        println!("Origin launching command sequence:\n{}", command_script);
 
         // IMPORTANT:
         // Everything runs inside ONE cmd.exe session.
@@ -133,14 +124,9 @@ pub fn launch_run_command(
     #[cfg(not(target_os = "windows"))]
     let child = {
         // Normalize line endings first.
-        let normalized_command = command
-            .replace("\r\n", "\n")
-            .replace('\r', "\n");
+        let normalized_command = command.replace("\r\n", "\n").replace('\r', "\n");
 
-        println!(
-            "Origin launching command sequence:\n{}",
-            normalized_command
-        );
+        println!("Origin launching command sequence:\n{}", normalized_command);
 
         // Execute the entire multiline script in one shell
         // session.
@@ -163,12 +149,7 @@ pub fn launch_run_command(
     // Spawn process
     // ---------------------------------------------
 
-    let child = child.map_err(|error| {
-        format!(
-            "Failed to start command: {}",
-            error
-        )
-    })?;
+    let child = child.map_err(|error| format!("Failed to start command: {}", error))?;
 
     let pid = child.id();
 
@@ -176,42 +157,32 @@ pub fn launch_run_command(
     // Store process
     // ---------------------------------------------
 
-    let mut processes =
-        state.processes.lock().map_err(|_| {
-            "Failed to access process state".to_string()
-        })?;
+    let mut processes = state
+        .processes
+        .lock()
+        .map_err(|_| "Failed to access process state".to_string())?;
 
     processes.insert(id.clone(), pid);
 
-    println!(
-        "Origin process started: {} (PID {})",
-        id,
-        pid
-    );
+    println!("Origin process started: {} (PID {})", id, pid);
 
     // ---------------------------------------------
     // Return process information
     // ---------------------------------------------
 
-    Ok(LaunchProcessResult {
-        id,
-        pid,
-    })
+    Ok(LaunchProcessResult { id, pid })
 }
 
 #[tauri::command]
-pub fn stop_run_command(
-    state: State<'_, ProcessState>,
-    id: String,
-) -> Result<(), String> {
+pub fn stop_run_command(state: State<'_, ProcessState>, id: String) -> Result<(), String> {
     // ---------------------------------------------
     // Access process state
     // ---------------------------------------------
 
-    let mut processes =
-        state.processes.lock().map_err(|_| {
-            "Failed to access process state".to_string()
-        })?;
+    let mut processes = state
+        .processes
+        .lock()
+        .map_err(|_| "Failed to access process state".to_string())?;
 
     // ---------------------------------------------
     // Find process
@@ -240,19 +211,9 @@ pub fn stop_run_command(
         //
         // because npm can spawn additional processes.
         Command::new("taskkill")
-            .args([
-                "/PID",
-                &pid.to_string(),
-                "/T",
-                "/F",
-            ])
+            .args(["/PID", &pid.to_string(), "/T", "/F"])
             .output()
-            .map_err(|error| {
-                format!(
-                    "Failed to stop process: {}",
-                    error
-                )
-            })?;
+            .map_err(|error| format!("Failed to stop process: {}", error))?;
     }
 
     // ---------------------------------------------
@@ -264,19 +225,10 @@ pub fn stop_run_command(
         Command::new("kill")
             .arg(pid.to_string())
             .output()
-            .map_err(|error| {
-                format!(
-                    "Failed to stop process: {}",
-                    error
-                )
-            })?;
+            .map_err(|error| format!("Failed to stop process: {}", error))?;
     }
 
-    println!(
-        "Origin process stopped: {} (PID {})",
-        id,
-        pid
-    );
+    println!("Origin process stopped: {} (PID {})", id, pid);
 
     Ok(())
 }
