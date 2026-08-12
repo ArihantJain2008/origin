@@ -61,9 +61,7 @@ fn send_media_command(
 pub fn media_play_pause() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        return send_media_command(
-            APPCOMMAND_MEDIA_PLAY_PAUSE
-        );
+        return send_media_command(APPCOMMAND_MEDIA_PLAY_PAUSE);
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -71,15 +69,12 @@ pub fn media_play_pause() -> Result<(), String> {
         return send_media_command(0);
     }
 }
-
 
 #[tauri::command]
 pub fn media_next() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        return send_media_command(
-            APPCOMMAND_MEDIA_NEXTTRACK
-        );
+        return send_media_command(APPCOMMAND_MEDIA_NEXTTRACK);
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -88,14 +83,11 @@ pub fn media_next() -> Result<(), String> {
     }
 }
 
-
 #[tauri::command]
 pub fn media_previous() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        return send_media_command(
-            APPCOMMAND_MEDIA_PREVIOUSTRACK
-        );
+        return send_media_command(APPCOMMAND_MEDIA_PREVIOUSTRACK);
     }
 
     #[cfg(not(target_os = "windows"))]
