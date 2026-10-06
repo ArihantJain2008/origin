@@ -29,14 +29,28 @@ export default function OverlayWidget({
 
   const [dragging, setDragging] = useState(false);
 
+  const [draftPosition, setDraftPosition] =
+    useState<{
+      x: number;
+      y: number;
+    } | null>(null);
+
   const dragOffset = useRef({
     x: 0,
     y: 0,
   });
 
+  const draftPositionRef = useRef({
+    x: widget.position.x,
+    y: widget.position.y,
+  });
+
   if (!widget.visible) {
     return null;
   }
+
+  const position =
+    draftPosition ?? widget.position;
 
   const handlePointerDown = (
     event: PointerEvent<HTMLDivElement>
@@ -59,6 +73,11 @@ export default function OverlayWidget({
     dragOffset.current = {
       x: event.clientX - rect.left,
       y: event.clientY - rect.top,
+    };
+
+    draftPositionRef.current = {
+      x: widget.position.x,
+      y: widget.position.y,
     };
 
     element.setPointerCapture(event.pointerId);
@@ -124,11 +143,15 @@ export default function OverlayWidget({
       maxY
     );
 
-    updateWidgetPosition(
-      id,
+    const nextPosition = {
       x,
-      y
-    );
+      y,
+    };
+
+    draftPositionRef.current =
+      nextPosition;
+
+    setDraftPosition(nextPosition);
   };
 
   const handlePointerUp = (
@@ -148,6 +171,13 @@ export default function OverlayWidget({
       );
     }
 
+    updateWidgetPosition(
+      id,
+      draftPositionRef.current.x,
+      draftPositionRef.current.y
+    );
+
+    setDraftPosition(null);
     setDragging(false);
   };
 
@@ -157,10 +187,11 @@ export default function OverlayWidget({
     onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
       style={{
         position: "fixed",
-        left: widget.position.x,
-        top: widget.position.y,
+        left: position.x,
+        top: position.y,
         zIndex: dragging ? 100 : 10,
         touchAction: "none",
       }}

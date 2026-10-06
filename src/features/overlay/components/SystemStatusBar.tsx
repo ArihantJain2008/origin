@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 interface SystemStats {
   cpuUsage: number;
@@ -14,6 +15,13 @@ export default function SystemStatusBar() {
 
   const [detailed, setDetailed] =
     useState(false);
+
+  const [pollingActive, setPollingActive] =
+    useState(
+      () =>
+        document.visibilityState !==
+        "hidden"
+    );
 
   /*
    * Session start.
@@ -61,9 +69,107 @@ export default function SystemStatusBar() {
 
   useEffect(() => {
     let mounted = true;
+    let unlistenFocus:
+      | (() => void)
+      | undefined;
+
+    const currentWindow =
+      getCurrentWindow();
+
+    async function syncPollingState() {
+      try {
+        const visible =
+          await currentWindow.isVisible();
+
+        if (mounted) {
+          setPollingActive(
+            visible &&
+              document.visibilityState !==
+                "hidden"
+          );
+        }
+      } catch (error) {
+        if (mounted) {
+          setPollingActive(
+            document.visibilityState !==
+              "hidden"
+          );
+        }
+
+        console.error(
+          "Failed to read overlay visibility:",
+          error
+        );
+      }
+    }
+
+    function handleVisibilityChange() {
+      void syncPollingState();
+    }
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    currentWindow
+      .onFocusChanged(() => {
+        void syncPollingState();
+      })
+      .then((unlisten) => {
+        if (mounted) {
+          unlistenFocus = unlisten;
+        } else {
+          unlisten();
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "Failed to subscribe to overlay focus changes:",
+          error
+        );
+      });
+
+    void syncPollingState();
+
+    return () => {
+      mounted = false;
+
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+
+      unlistenFocus?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pollingActive) {
+      return;
+    }
+
+    let mounted = true;
+    const currentWindow =
+      getCurrentWindow();
 
     async function loadStats() {
       try {
+        const visible =
+          await currentWindow.isVisible();
+
+        if (
+          !visible ||
+          document.visibilityState ===
+            "hidden"
+        ) {
+          if (mounted) {
+            setPollingActive(false);
+          }
+
+          return;
+        }
+
         const result =
           await invoke<SystemStats>(
             "system_get_stats"
@@ -94,13 +200,17 @@ export default function SystemStatusBar() {
         interval
       );
     };
-  }, []);
+  }, [pollingActive]);
 
   /*
    * Session timer
    */
 
   useEffect(() => {
+    if (!pollingActive) {
+      return;
+    }
+
     const interval =
       window.setInterval(() => {
         setSessionSeconds(
@@ -120,7 +230,7 @@ export default function SystemStatusBar() {
         interval
       );
     };
-  }, [sessionStart]);
+  }, [pollingActive, sessionStart]);
 
   /*
    * Format session time

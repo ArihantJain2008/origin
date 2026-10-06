@@ -172,12 +172,6 @@ export default function OverlayCanvas() {
       handleUnhandledRejection
     );
 
-    document.addEventListener(
-    "pointerdown",
-    handleOutsidePointerDown,
-    true
-  );
-
     function handleOutsidePointerDown(event: PointerEvent) {
   const target = event.target as HTMLElement | null;
 
@@ -196,11 +190,11 @@ export default function OverlayCanvas() {
   void closeOverlay();
 }
 
-document.addEventListener(
-  "pointerdown",
-  handleOutsidePointerDown,
-  true
-);
+    document.addEventListener(
+      "pointerdown",
+      handleOutsidePointerDown,
+      true
+    );
 
     return () => {
       console.log(
@@ -215,6 +209,12 @@ document.addEventListener(
       window.removeEventListener(
         "unhandledrejection",
         handleUnhandledRejection
+      );
+
+      document.removeEventListener(
+        "pointerdown",
+        handleOutsidePointerDown,
+        true
       );
     };
   }, []);

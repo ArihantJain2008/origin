@@ -101,7 +101,6 @@ console.log("Health:", analysis?.health);
     useProjectStore.getState().setActiveProject(project.id);
 
     await launchProject(project.id, project.path);
-    await refreshApplicationState();
   };
 
   const [menuOpen, setMenuOpen] = useState(false);

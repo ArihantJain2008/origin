@@ -12,7 +12,6 @@ import { Button, Card, Input } from "@/shared/components/ui";
 import SummaryCards from "@/features/dashboard/components/SummaryCards";
 import InsightsPanel from "@/features/dashboard/components/InsightsPanel";
 import { useAppStore } from "@/features/app/store/appStore";
-import { refreshApplicationState } from "@/features/app/coordinator/appCoordinator";
 import ContinueWorking from "@/features/dashboard/components/ContinueWorking";
 import RecentActivity from "@/features/dashboard/components/RecentActivity";
 import Statistics from "@/features/dashboard/components/Statistics";
@@ -94,7 +93,6 @@ export default function HomePage() {
     useProjectStore.getState().setActiveProject(projectId);
 
     await launchProject(projectId, path);
-    await refreshApplicationState();
   };
 
   if (initializing || !ready) {
