@@ -113,15 +113,19 @@ export default function ProjectWidget() {
       activeProject &&
       !analysis
     ) {
-      analyze(
-        activeProject.id,
-        activeProject.path
-      ).catch((error) => {
-        console.error(
-          "Failed to analyze project for overlay:",
-          error
-        );
-      });
+      const timer = window.setTimeout(() => {
+        analyze(
+          activeProject.id,
+          activeProject.path
+        ).catch((error) => {
+          console.error(
+            "Failed to analyze project for overlay:",
+            error
+          );
+        });
+      }, 250);
+
+      return () => window.clearTimeout(timer);
     }
   }, [
     activeProject?.id,

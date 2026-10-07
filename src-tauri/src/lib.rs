@@ -195,6 +195,7 @@ pub fn run() {
             // Projects
             commands::projects::save_project,
             commands::projects::load_projects,
+            commands::projects::refresh_project_git,
             commands::projects::remove_project,
             commands::projects::update_project_favorite,
             // Settings

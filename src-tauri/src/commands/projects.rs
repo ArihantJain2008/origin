@@ -1,6 +1,10 @@
 use tauri::State;
 
-use crate::{database::database::Database, models::project::ProjectDto, services::project_service};
+use crate::{
+    database::database::Database,
+    models::project::ProjectDto,
+    services::{git_service, project_service},
+};
 
 #[tauri::command]
 pub fn save_project(database: State<'_, Database>, project: ProjectDto) -> Result<(), String> {
@@ -10,6 +14,11 @@ pub fn save_project(database: State<'_, Database>, project: ProjectDto) -> Resul
 #[tauri::command]
 pub fn load_projects(database: State<'_, Database>) -> Result<Vec<ProjectDto>, String> {
     project_service::load_projects(&database)
+}
+
+#[tauri::command]
+pub fn refresh_project_git(path: String) -> git_service::GitStatus {
+    git_service::get_git_status(&path)
 }
 
 #[tauri::command]

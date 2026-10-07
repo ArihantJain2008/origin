@@ -60,11 +60,16 @@ export async function initializeApplication() {
     appStore.setReady(false);
 
     try {
-      await refreshApplicationState();
+      await useProjectStore.getState().loadProjects();
       hasInitialized = true;
     } finally {
       appStore.setReady(true);
       appStore.setInitializing(false);
+
+      // Analysis is intentionally started after the first dashboard paint.
+      window.setTimeout(() => {
+        void reconcileAnalysisWithProjects();
+      }, 250);
     }
   })().finally(() => {
     initializationPromise = null;

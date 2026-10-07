@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { Project } from "../types/project";
 import {
   loadProjects as loadProjectsFromApi,
+  refreshProjectGit,
 } from "../services/projectApi";
 
 interface ProjectStore {
@@ -89,6 +90,30 @@ export const useProjectStore =
             activeProjectId: activeStillExists ? persistedActive : null,
           };
         });
+
+        window.setTimeout(() => {
+          void Promise.all(
+            projects.map(async (project) => {
+              try {
+                const git = await refreshProjectGit(project.path);
+
+                set((state) => ({
+                  projects: state.projects.map((current) =>
+                    current.id === project.id
+                      ? {
+                          ...current,
+                          gitBranch: git.branch ?? undefined,
+                          gitDirty: git.dirty,
+                        }
+                      : current
+                  ),
+                }));
+              } catch (error) {
+                console.warn("Failed to refresh project Git status:", error);
+              }
+            })
+          );
+        }, 250);
     },
 
     setActiveProject: (projectId) =>

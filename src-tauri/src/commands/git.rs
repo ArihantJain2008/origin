@@ -1,11 +1,27 @@
 use std::process::Command;
 
+#[cfg(target_os = "windows")]
+fn git_command() -> Command {
+    use std::os::windows::process::CommandExt;
+
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+    let mut command = Command::new("git");
+    command.creation_flags(CREATE_NO_WINDOW);
+    command
+}
+
+#[cfg(not(target_os = "windows"))]
+fn git_command() -> Command {
+    Command::new("git")
+}
+
 fn run_git(project_path: &str, args: &[&str]) -> Result<String, String> {
     if project_path.trim().is_empty() {
         return Err("Project path cannot be empty".to_string());
     }
 
-    let output = Command::new("git")
+    let output = git_command()
         .args(args)
         .current_dir(project_path)
         .output()

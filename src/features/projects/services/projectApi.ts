@@ -35,6 +35,13 @@ export async function loadProjects(): Promise<Project[]> {
   return projects.map(mapProjectDto);
 }
 
+export async function refreshProjectGit(path: string) {
+  return invoke<{ branch: string | null; dirty: boolean }>(
+    "refresh_project_git",
+    { path }
+  );
+}
+
 export async function removeProject(id: string) {
   await invoke("remove_project", {
     id,

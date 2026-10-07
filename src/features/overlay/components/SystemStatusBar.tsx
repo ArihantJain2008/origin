@@ -186,7 +186,9 @@ export default function SystemStatusBar() {
       }
     }
 
-    loadStats();
+    const initialLoadTimer = window.setTimeout(() => {
+      void loadStats();
+    }, 250);
 
     const interval =
       window.setInterval(
@@ -196,6 +198,7 @@ export default function SystemStatusBar() {
 
     return () => {
       mounted = false;
+      window.clearTimeout(initialLoadTimer);
       window.clearInterval(
         interval
       );

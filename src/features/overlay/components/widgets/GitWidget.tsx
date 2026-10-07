@@ -146,9 +146,15 @@ export default function GitWidget() {
     setBranches([]);
     setGitChanges([]);
 
-    if (activeProject) {
-      loadGitData();
+    if (!activeProject) {
+      return;
     }
+
+    const timer = window.setTimeout(() => {
+      void loadGitData();
+    }, 250);
+
+    return () => window.clearTimeout(timer);
   }, [activeProject?.id]);
 
   async function handleCommit() {
