@@ -33,6 +33,10 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut,
 
 const DEBUG_OPEN_OVERLAY_ON_STARTUP: bool = false;
 
+fn overlay_shortcut() -> Shortcut {
+    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::Space)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -48,9 +52,7 @@ pub fn run() {
                         return;
                     }
 
-                    // Ctrl + Shift + Space
-                    let overlay_shortcut =
-                        Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::Space);
+                    let overlay_shortcut = overlay_shortcut();
 
                     if shortcut == &overlay_shortcut {
                         println!("Origin overlay shortcut pressed");
@@ -101,8 +103,7 @@ pub fn run() {
             // Global Overlay Shortcut
             // -------------------------------------------------
 
-            let overlay_shortcut =
-                Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::Space);
+            let overlay_shortcut = overlay_shortcut();
 
             app.global_shortcut()
                 .register(overlay_shortcut)

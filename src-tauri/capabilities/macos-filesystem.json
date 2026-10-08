@@ -1,0 +1,36 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "macos-filesystem",
+  "description": "Read-only filesystem access for Origin projects selected under the macOS home directory",
+  "platforms": ["macOS"],
+  "windows": ["main", "overlay"],
+  "permissions": [
+    {
+      "identifier": "fs:allow-read-dir",
+      "allow": [
+        {
+          "path": "$HOME"
+        },
+        {
+          "path": "$HOME/**/*"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [
+        {
+          "path": "$HOME/**/*"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [
+        {
+          "path": "$HOME/**/*"
+        }
+      ]
+    }
+  ]
+}

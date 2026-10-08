@@ -13,36 +13,6 @@
     "dialog:default",
     "fs:read-all",
 
-    {
-      "identifier": "fs:allow-read-dir",
-      "allow": [
-        {
-          "path": "C:/origin"
-        },
-        {
-          "path": "C:/origin/**/*"
-        }
-      ]
-    },
-
-    {
-      "identifier": "fs:allow-read-text-file",
-      "allow": [
-        {
-          "path": "C:/origin/**/*"
-        }
-      ]
-    },
-
-    {
-      "identifier": "fs:allow-exists",
-      "allow": [
-        {
-          "path": "C:/origin/**/*"
-        }
-      ]
-    },
-
     "shell:default",
     "shell:allow-execute",
     "global-shortcut:allow-is-registered",

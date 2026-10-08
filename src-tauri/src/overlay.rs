@@ -43,28 +43,27 @@ fn create_overlay_window(
     _detected_project_path: Option<String>,
 ) {
     println!(
-        "[OVERLAY] creating fullscreen overlay window"
+        "[OVERLAY] creating overlay window"
     );
 
-    let builder =
-        WebviewWindowBuilder::new(
-            app,
-            OVERLAY_LABEL,
-            WebviewUrl::App("/?overlay=1".into()),
-        )
-        .title("Origin Overlay")
-        .fullscreen(true)
-        .decorations(false)
-        .always_on_top(true)
-        .skip_taskbar(true)
-        .resizable(false)
-        .maximizable(false)
-        .minimizable(false)
-        .focused(true)
-        .visible(true);
+    let builder = WebviewWindowBuilder::new(
+        app,
+        OVERLAY_LABEL,
+        WebviewUrl::App("/?overlay=1".into()),
+    )
+    .title("Origin Overlay")
+    .decorations(false)
+    .always_on_top(true)
+    .skip_taskbar(true)
+    .resizable(false)
+    .maximizable(false)
+    .minimizable(false)
+    .focused(true)
+    .visible(true);
 
     #[cfg(not(target_os = "macos"))]
     let builder = builder
+        .fullscreen(true)
         .transparent(true)
         .background_color(
             tauri::window::Color(0, 0, 0, 0)
@@ -72,8 +71,11 @@ fn create_overlay_window(
 
     #[cfg(target_os = "macos")]
     let builder = builder
+        .inner_size(900.0, 700.0)
+        .center()
+        .transparent(true)
         .background_color(
-            tauri::window::Color(0, 0, 0, 255)
+            tauri::window::Color(0, 0, 0, 0)
         );
 
     let result = builder.build();
@@ -81,7 +83,7 @@ fn create_overlay_window(
     match result {
         Ok(window) => {
             println!(
-                "[OVERLAY] fullscreen overlay created"
+                "[OVERLAY] overlay created"
             );
 
             let callback_window = window.clone();
