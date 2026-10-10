@@ -58,6 +58,19 @@ Sprint 6 — Architecture Stabilization
 - UI preferences
 - Centralized application initialization
 
+## macOS Installation
+
+macOS releases are available on the [Origin GitHub releases page](https://github.com/ArihantJain2008/origin/releases). Download the artifact that matches your Mac:
+
+- Apple silicon: `aarch64` or `arm64`
+- Intel: `x86_64`
+
+If you downloaded an archive, extract it first. Move `Origin.app` (it may appear as `origin.app` in an older release) to the Applications folder, then try opening Origin normally.
+
+Origin macOS builds are ad-hoc signed and are **not notarized or Apple-verified**. macOS may therefore block the first launch. If macOS shows an override option, open **System Settings → Privacy & Security**, scroll to the Security section, and select **Open Anyway** for Origin. On older macOS versions, you may instead be able to right-click the app and choose **Open**, depending on the warning shown.
+
+These options are not guaranteed to appear when the app has an invalid signature, an incomplete download, a corrupted archive, or another integrity problem. Do not disable Gatekeeper globally. If the “Origin is damaged and can’t be opened” message persists, download a fresh copy and report your macOS version, CPU architecture, Origin version, and the exact error message.
+
 ---
 
 ## Tech Stack
