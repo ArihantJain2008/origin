@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useProjectStore } from "@/features/projects/store/projectStore";
@@ -7,53 +7,12 @@ import { useSettingsStore } from "@/features/settings/store/settingsStore";
 import { useCommandPaletteStore } from "../store/commandPaletteStore";
 import { getCommands } from "../data/commands";
 import { getProjectCommands } from "../data/projectCommands";
-
-function normalizeKey(key: string) {
-  return key.length === 1 ? key.toUpperCase() : key;
-}
-
-function shortcutMatches(
-  event: KeyboardEvent,
-  shortcut: string
-) {
-  const parts = shortcut
-    .split("+")
-    .map((part) => part.trim().toLowerCase());
-
-  const hasCtrl = parts.includes("ctrl");
-  const hasShift = parts.includes("shift");
-  const hasAlt = parts.includes("alt");
-
-  const hasMeta =
-    parts.includes("meta") ||
-    parts.includes("cmd") ||
-    parts.includes("command");
-
-  const keyPart = parts.find(
-    (part) =>
-      ![
-        "ctrl",
-        "shift",
-        "alt",
-        "meta",
-        "cmd",
-        "command",
-      ].includes(part)
-  );
-
-  if (!keyPart) {
-    return false;
-  }
-
-  return (
-    event.ctrlKey === hasCtrl &&
-    event.shiftKey === hasShift &&
-    event.altKey === hasAlt &&
-    event.metaKey === hasMeta &&
-    normalizeKey(event.key).toLowerCase() ===
-      keyPart.toLowerCase()
-  );
-}
+import {
+  getDefaultShortcut,
+  getOriginPlatform,
+  shortcutMatches,
+  type OriginPlatform,
+} from "@/shared/utils/shortcuts";
 
 export function useCommandPalette() {
   const open = useCommandPaletteStore(
@@ -78,6 +37,13 @@ export function useCommandPalette() {
     (state) => state.settings
   );
 
+  const [platform, setPlatform] =
+    useState<OriginPlatform>("windows");
+
+  useEffect(() => {
+    setPlatform(getOriginPlatform());
+  }, []);
+
   const commands = useMemo(
     () => [
       ...getCommands(navigate),
@@ -89,38 +55,10 @@ export function useCommandPalette() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       /*
-       * Command palette
-       */
-      if (
-        event.ctrlKey &&
-        event.key.toLowerCase() === "k"
-      ) {
-        event.preventDefault();
-        toggle();
-        return;
-      }
-
-      /*
        * Escape
        */
       if (event.key === "Escape") {
         close();
-        return;
-      }
-
-      /*
-       * Don't trigger global shortcuts while
-       * typing inside an input.
-       */
-      const target = event.target as HTMLElement | null;
-
-      const isTyping =
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.tagName === "SELECT" ||
-        target?.isContentEditable;
-
-      if (isTyping) {
         return;
       }
 
@@ -130,18 +68,27 @@ export function useCommandPalette() {
       for (const command of commands) {
         const shortcut =
           settings.commandShortcuts[command.id] ??
-          command.defaultShortcut;
+          command.defaultShortcut ??
+          getDefaultShortcut(command.id, platform);
 
         if (!shortcut) {
           continue;
         }
 
         if (
-          shortcutMatches(
-            event,
-            shortcut
-          )
+          shortcutMatches(event, shortcut, platform)
         ) {
+          const target = event.target as HTMLElement | null;
+          const isTyping =
+            target?.tagName === "INPUT" ||
+            target?.tagName === "TEXTAREA" ||
+            target?.tagName === "SELECT" ||
+            target?.isContentEditable;
+
+          if (isTyping && command.id !== "command-palette") {
+            return;
+          }
+
           event.preventDefault();
           command.action();
           return;
@@ -163,8 +110,8 @@ export function useCommandPalette() {
   }, [
     commands,
     settings.commandShortcuts,
-    toggle,
     close,
+    platform,
   ]);
 
   return {

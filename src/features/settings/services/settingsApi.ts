@@ -54,3 +54,11 @@ export async function loadSettings(): Promise<Settings> {
 
   return mapSettingsDto(dto);
 }
+
+export async function updateOverlayShortcut(
+  shortcut: string
+) {
+  await invoke("update_overlay_shortcut", {
+    shortcut,
+  });
+}

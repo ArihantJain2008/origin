@@ -27,6 +27,7 @@ walkdir = "2.5"
 regex = "1.11"
 sysinfo = "0.37"
 tauri-plugin-process = "2"
+tauri-plugin-os = "2"
 
 # ============================================================
 # Windows Media Controls

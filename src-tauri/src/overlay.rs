@@ -38,103 +38,69 @@ pub fn toggle_overlay(app: &AppHandle, detected_project_path: Option<String>) {
     create_overlay_window(app, detected_project_path);
 }
 
-fn create_overlay_window(
-    app: &AppHandle,
-    _detected_project_path: Option<String>,
-) {
-    println!(
-        "[OVERLAY] creating overlay window"
-    );
+fn create_overlay_window(app: &AppHandle, _detected_project_path: Option<String>) {
+    println!("[OVERLAY] creating overlay window");
 
-    let builder = WebviewWindowBuilder::new(
-        app,
-        OVERLAY_LABEL,
-        WebviewUrl::App("/?overlay=1".into()),
-    )
-    .title("Origin Overlay")
-    .decorations(false)
-    .always_on_top(true)
-    .skip_taskbar(true)
-    .resizable(false)
-    .maximizable(false)
-    .minimizable(false)
-    .focused(true)
-    .visible(true);
+    let builder =
+        WebviewWindowBuilder::new(app, OVERLAY_LABEL, WebviewUrl::App("/?overlay=1".into()))
+            .title("Origin Overlay")
+            .decorations(false)
+            .always_on_top(true)
+            .skip_taskbar(true)
+            .resizable(false)
+            .maximizable(false)
+            .minimizable(false)
+            .focused(true)
+            .visible(true);
 
     #[cfg(not(target_os = "macos"))]
     let builder = builder
         .fullscreen(true)
         .transparent(true)
-        .background_color(
-            tauri::window::Color(0, 0, 0, 0)
-        );
+        .background_color(tauri::window::Color(0, 0, 0, 0));
 
     #[cfg(target_os = "macos")]
     let builder = builder
         .inner_size(900.0, 700.0)
         .center()
         .transparent(true)
-        .background_color(
-            tauri::window::Color(0, 0, 0, 0)
-        );
+        .background_color(tauri::window::Color(0, 0, 0, 0));
 
     let result = builder.build();
 
     match result {
         Ok(window) => {
-            println!(
-                "[OVERLAY] overlay created"
-            );
+            println!("[OVERLAY] overlay created");
 
             let callback_window = window.clone();
 
-            window.on_window_event(
-                move |event| match event {
-                    tauri::WindowEvent::Focused(true) => {
-                        println!(
-                            "[OVERLAY] Focused true"
-                        );
+            window.on_window_event(move |event| match event {
+                tauri::WindowEvent::Focused(true) => {
+                    println!("[OVERLAY] Focused true");
+                }
+
+                tauri::WindowEvent::Focused(false) => {
+                    println!("[OVERLAY] Focus lost -> hiding overlay");
+
+                    if let Err(error) = callback_window.hide() {
+                        eprintln!("[OVERLAY] failed to hide overlay: {}", error);
                     }
+                }
 
-                    tauri::WindowEvent::Focused(false) => {
-                        println!(
-                            "[OVERLAY] Focus lost -> hiding overlay"
-                        );
+                tauri::WindowEvent::CloseRequested { .. } => {
+                    println!("[OVERLAY] CloseRequested");
+                }
 
-                        if let Err(error) =
-                            callback_window.hide()
-                        {
-                            eprintln!(
-                                "[OVERLAY] failed to hide overlay: {}",
-                                error
-                            );
-                        }
-                    }
+                tauri::WindowEvent::Destroyed => {
+                    println!("[OVERLAY] Destroyed");
+                }
 
-                    tauri::WindowEvent::CloseRequested {
-                        ..
-                    } => {
-                        println!(
-                            "[OVERLAY] CloseRequested"
-                        );
-                    }
-
-                    tauri::WindowEvent::Destroyed => {
-                        println!(
-                            "[OVERLAY] Destroyed"
-                        );
-                    }
-
-                    _ => {}
-                },
-            );
+                _ => {}
+            });
         }
 
         Err(error) => {
-            eprintln!(
-                "[OVERLAY] failed to create overlay: {}",
-                error
-            );
+            eprintln!("[OVERLAY] failed to create overlay: {}", error);
         }
     }
 }

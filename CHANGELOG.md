@@ -4,6 +4,21 @@ All notable changes to Origin are documented here.
 
 ---
 
+# v1.0.0
+
+## Stable release
+
+- Folder browser improvements
+- Project detection improvements
+- macOS support
+- macOS builds are ad-hoc signed and are not notarized or Apple-verified
+- Performance improvements
+- Bug fixes
+
+See the [published v1.0.0 release](https://github.com/ArihantJain2008/origin/releases/tag/v1.0.0) for installers and updater artifacts.
+
+---
+
 # v0.6.0-alpha
 
 ## Sprint 6 Started

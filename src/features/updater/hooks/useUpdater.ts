@@ -5,6 +5,7 @@ import {
 } from "react";
 
 import type { Update } from "@tauri-apps/plugin-updater";
+import { getVersion } from "@tauri-apps/api/app";
 
 import {
   checkForUpdate,
@@ -21,7 +22,7 @@ export function useUpdater() {
       "checking" |
       "available" |
       "downloading" |
-      "installing" |
+      "up-to-date" |
       "error"
     >("idle");
 
@@ -34,14 +35,20 @@ export function useUpdater() {
   const [error, setError] =
     useState<string | null>(null);
 
+  const [installedVersion, setInstalledVersion] =
+    useState<string | null>(null);
+
   const checkForUpdates =
     useCallback(async () => {
       setStatus("checking");
       setError(null);
 
       try {
-        const available =
-          await checkForUpdate();
+        const [currentVersion, available] = await Promise.all([
+          getVersion(),
+          checkForUpdate(),
+        ]);
+        setInstalledVersion(currentVersion);
 
         if (available) {
           setUpdate(available);
@@ -53,7 +60,7 @@ export function useUpdater() {
           );
         } else {
           setUpdate(null);
-          setStatus("idle");
+          setStatus("up-to-date");
 
           console.log(
             "[UPDATER] Origin is up to date."
@@ -91,10 +98,6 @@ export function useUpdater() {
           update,
           (value) => {
             setProgress(value);
-
-            if (value >= 100) {
-              setStatus("installing");
-            }
           }
         );
       } catch (error) {
@@ -124,6 +127,7 @@ export function useUpdater() {
   status,
   progress,
   error,
+  installedVersion,
   dismissed,
   dismiss: () => setDismissed(true),
   checkForUpdates,

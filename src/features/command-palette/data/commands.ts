@@ -1,4 +1,5 @@
 import { Command } from "../types/command";
+import { useCommandPaletteStore } from "../store/commandPaletteStore";
 
 export function getCommands(
   navigate: (path: string) => void
@@ -10,7 +11,7 @@ export function getCommands(
       subtitle: "Navigate to dashboard",
       category: "navigation",
       keywords: ["dashboard", "start", "home"],
-      defaultShortcut: "Ctrl+H",
+      defaultShortcut: "CommandOrControl+H",
       action: () => navigate("/"),
     },
 
@@ -24,7 +25,7 @@ export function getCommands(
         "projects",
         "files",
       ],
-      defaultShortcut: "Ctrl+2",
+      defaultShortcut: "CommandOrControl+2",
       action: () => navigate("/projects"),
     },
 
@@ -39,8 +40,18 @@ export function getCommands(
         "settings",
         "theme",
       ],
-      defaultShortcut: "Ctrl+,",
+      defaultShortcut: "CommandOrControl+,",
       action: () => navigate("/settings"),
+    },
+
+    {
+      id: "command-palette",
+      title: "Toggle Command Palette",
+      subtitle: "Open or close the command palette",
+      category: "commandPalette",
+      keywords: ["commands", "search", "palette"],
+      defaultShortcut: "CommandOrControl+K",
+      action: () => useCommandPaletteStore.getState().toggle(),
     },
   ];
 }

@@ -11,30 +11,35 @@ import {
 } from "@/shared/components/ui";
 
 import { getCommands } from "@/features/command-palette/data/commands";
+import { invoke } from "@tauri-apps/api/core";
+import {
+  captureShortcut,
+  displayShortcut,
+  getDefaultShortcut,
+    isSupportedShortcut,
+  normalizeShortcut,
+  SHORTCUT_IDS,
+} from "@/shared/utils/shortcuts";
 import { useSettingsStore } from "../store/settingsStore";
 
 const categoryLabels = {
   navigation: "Navigation",
+  overlay: "Overlay",
+  commandPalette: "Command Palette",
   projects: "Projects",
   editor: "Editor",
   application: "Application",
 } as const;
-
-function formatShortcut(shortcut: string) {
-  return shortcut
-    .split("Control").join("Ctrl")
-    .split("Meta").join("⌘")
-    .split("ArrowUp").join("↑")
-    .split("ArrowDown").join("↓")
-    .split("ArrowLeft").join("←")
-    .split("ArrowRight").join("→");
-}
 
 export default function CommandSettings() {
   const navigate = useNavigate();
 
   const settings = useSettingsStore(
     (state) => state.settings
+  );
+
+  const platform = useSettingsStore(
+    (state) => state.platform
   );
 
   const setCommandShortcut =
@@ -53,10 +58,25 @@ export default function CommandSettings() {
       state.resetAllCommandShortcuts
   );
 
-  const commands = useMemo(
-    () => getCommands(navigate),
-    [navigate]
-  );
+  const commands = useMemo(() => {
+    const overlayShortcut = getDefaultShortcut(
+      SHORTCUT_IDS.overlay,
+      platform
+    );
+
+    return [
+      ...getCommands(navigate),
+      {
+        id: SHORTCUT_IDS.overlay,
+        title: "Toggle Origin Overlay",
+        subtitle: "Show or hide the global Origin overlay",
+        category: "overlay" as const,
+        keywords: ["overlay", "global", "show", "hide"],
+        defaultShortcut: overlayShortcut,
+        action: () => invoke("toggle_overlay_command"),
+      },
+    ];
+  }, [navigate, platform]);
 
   const [recordingCommand, setRecordingCommand] =
     useState<string | null>(null);
@@ -115,44 +135,13 @@ export default function CommandSettings() {
         return;
       }
 
-      const parts: string[] = [];
+      const shortcut = captureShortcut(event, platform);
 
-      if (event.ctrlKey) {
-        parts.push("Ctrl");
-      }
-
-      if (event.metaKey) {
-        parts.push("Meta");
-      }
-
-      if (event.shiftKey) {
-        parts.push("Shift");
-      }
-
-      if (event.altKey) {
-        parts.push("Alt");
-      }
-
-      const ignoredKeys = [
-        "Control",
-        "Shift",
-        "Alt",
-        "Meta",
-      ];
-
-      if (
-        !ignoredKeys.includes(event.key)
-      ) {
-        parts.push(event.key);
-      }
-
-      if (parts.length === 0) {
+      if (!shortcut) {
         return;
       }
 
-      setRecordedShortcut(
-        parts.join("+")
-      );
+      setRecordedShortcut(shortcut);
     };
 
     window.addEventListener(
@@ -168,7 +157,7 @@ export default function CommandSettings() {
         true
       );
     };
-  }, [recordingCommand]);
+  }, [platform, recordingCommand]);
 
   const saveShortcut = async (
     commandId: string
@@ -177,14 +166,46 @@ export default function CommandSettings() {
       return;
     }
 
-    const duplicate = Object.entries(
-      settings.commandShortcuts
-    ).some(
-      ([existingCommandId, shortcut]) =>
-        existingCommandId !== commandId &&
-        shortcut.toLowerCase() ===
-          recordedShortcut.toLowerCase()
+    const normalizedShortcut = normalizeShortcut(
+      recordedShortcut
     );
+
+    if (!isSupportedShortcut(normalizedShortcut)) {
+      window.alert(
+        "Use a key together with at least one modifier, such as Ctrl+K or Command+Shift+O."
+      );
+
+      return;
+    }
+
+    if (
+      platform === "macos" &&
+      normalizedShortcut ===
+        "CommandOrControl+Shift+Space" &&
+      commandId === SHORTCUT_IDS.overlay
+    ) {
+      window.alert(
+        "Command+Shift+Space is commonly used by macOS Spotlight. Choose another shortcut."
+      );
+
+      return;
+    }
+
+    const duplicate = commands.some((command) => {
+      if (command.id === commandId) {
+        return false;
+      }
+
+      const existingShortcut =
+        settings.commandShortcuts[command.id] ??
+        getDefaultShortcut(command.id, platform);
+
+      return (
+        existingShortcut !== undefined &&
+        normalizeShortcut(existingShortcut) ===
+          normalizedShortcut
+      );
+    });
 
     if (duplicate) {
       window.alert(
@@ -194,12 +215,16 @@ export default function CommandSettings() {
       return;
     }
 
-    await setCommandShortcut(
-      commandId,
-      recordedShortcut
-    );
-
-    cancelRecording();
+    try {
+      await setCommandShortcut(commandId, normalizedShortcut);
+      cancelRecording();
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Origin could not register that shortcut."
+      );
+    }
   };
 
   return (
@@ -215,8 +240,7 @@ export default function CommandSettings() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
   <p className="max-w-xl text-[13px] text-[var(--color-text-secondary)]">
-    Configure keyboard shortcuts for
-    commands throughout Origin.
+    Configure keyboard shortcuts for commands throughout Origin. Global shortcuts can conflict with operating-system shortcuts or another application.
   </p>
 
   <Button
@@ -309,9 +333,10 @@ export default function CommandSettings() {
                           {isRecording ? (
                             <>
                               <div className="rounded-[6px] border border-[var(--color-accent)] bg-[var(--color-accent-muted)] px-3 py-1.5 font-mono text-[11px] text-[var(--color-accent)]">
-                                {recordedShortcut
-                                  ? formatShortcut(
-                                      recordedShortcut
+                                  {recordedShortcut
+                                  ? displayShortcut(
+                                      recordedShortcut,
+                                      platform
                                     )
                                   : "Press a shortcut..."}
                               </div>
@@ -344,8 +369,9 @@ export default function CommandSettings() {
                             <>
                               {currentShortcut ? (
                                 <kbd className="rounded-[6px] border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] px-2 py-1 font-mono text-[11px] text-[var(--color-text-secondary)]">
-                                  {formatShortcut(
-                                    currentShortcut
+                                  {displayShortcut(
+                                    currentShortcut,
+                                    platform
                                   )}
                                 </kbd>
                               ) : null}

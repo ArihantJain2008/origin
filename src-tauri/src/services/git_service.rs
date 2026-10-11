@@ -1,5 +1,5 @@
-use std::process::Command;
 use serde::Serialize;
+use std::process::Command;
 
 #[cfg(target_os = "windows")]
 fn git_command() -> Command {

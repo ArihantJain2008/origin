@@ -1,6 +1,8 @@
 // Learn more about Tauri commands at
 // https://tauri.app/develop/calling-rust/
 
+use std::sync::Mutex;
+
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
@@ -28,19 +30,95 @@ use tauri::{
 };
 
 use commands::processes::ProcessState;
+use services::settings_service;
 
-use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
 const DEBUG_OPEN_OVERLAY_ON_STARTUP: bool = false;
 
-fn overlay_shortcut() -> Shortcut {
-    Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::Space)
+struct OverlayShortcutState(Mutex<Shortcut>);
+
+fn default_overlay_shortcut() -> &'static str {
+    #[cfg(target_os = "macos")]
+    {
+        return "CommandOrControl+Shift+Alt+O";
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        "CommandOrControl+Shift+Space"
+    }
+}
+
+fn parse_overlay_shortcut(value: Option<&String>) -> Shortcut {
+    value
+        .map(String::as_str)
+        .unwrap_or(default_overlay_shortcut())
+        .parse()
+        .unwrap_or_else(|error| {
+            eprintln!(
+                "[SHORTCUT] invalid saved overlay shortcut, using default: {}",
+                error
+            );
+            default_overlay_shortcut()
+                .parse()
+                .expect("default overlay shortcut must be valid")
+        })
+}
+
+#[tauri::command]
+fn update_overlay_shortcut(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, OverlayShortcutState>,
+    shortcut: String,
+) -> Result<(), String> {
+    let next = shortcut
+        .parse::<Shortcut>()
+        .map_err(|error| format!("Unsupported global shortcut: {}", error))?;
+
+    let mut current = state
+        .0
+        .lock()
+        .map_err(|_| "Global shortcut state is unavailable".to_string())?;
+
+    if next == *current {
+        return Ok(());
+    }
+
+    let previous = *current;
+
+    app.global_shortcut()
+        .unregister(previous)
+        .map_err(|error| format!("Failed to unregister the previous shortcut: {}", error))?;
+
+    if let Err(error) = app.global_shortcut().register(next) {
+        let restore_result = app.global_shortcut().register(previous);
+
+        return Err(match restore_result {
+            Ok(()) => format!("Could not register that shortcut: {}", error),
+            Err(restore_error) => format!(
+                "Could not register that shortcut: {}; restoring the previous shortcut also failed: {}",
+                error, restore_error
+            ),
+        });
+    }
+
+    *current = next;
+    println!("[SHORTCUT] overlay shortcut updated to {}", next);
+
+    Ok(())
+}
+
+#[tauri::command]
+fn toggle_overlay_command(app: tauri::AppHandle) {
+    overlay::toggle_overlay(&app, None);
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         // =====================================================
         // Global Shortcut
@@ -52,9 +130,14 @@ pub fn run() {
                         return;
                     }
 
-                    let overlay_shortcut = overlay_shortcut();
+                    let overlay_shortcut = app.state::<OverlayShortcutState>();
+                    let matches_overlay = overlay_shortcut
+                        .0
+                        .lock()
+                        .map(|registered| shortcut == &*registered)
+                        .unwrap_or(false);
 
-                    if shortcut == &overlay_shortcut {
+                    if matches_overlay {
                         println!("Origin overlay shortcut pressed");
 
                         let callback_handle = app.clone();
@@ -103,11 +186,23 @@ pub fn run() {
             // Global Overlay Shortcut
             // -------------------------------------------------
 
-            let overlay_shortcut = overlay_shortcut();
+            let overlay_shortcut = settings_service::load_settings(
+                &app.state::<Database>()
+            )
+            .ok()
+            .and_then(|settings| settings.command_shortcuts.get("overlay").cloned());
+            let overlay_shortcut = parse_overlay_shortcut(overlay_shortcut.as_ref());
+
+            app.manage(OverlayShortcutState(Mutex::new(overlay_shortcut)));
 
             app.global_shortcut()
                 .register(overlay_shortcut)
-                .expect("Failed to register overlay shortcut");
+                .map_err(|error| {
+                    format!(
+                        "Failed to register Origin's global overlay shortcut ({}). It may conflict with an operating-system shortcut or another application.",
+                        error
+                    )
+                })?;
 
             println!("Origin overlay shortcut registered.");
 
@@ -189,6 +284,8 @@ pub fn run() {
             // General
             greet,
             debug_log,
+            update_overlay_shortcut,
+            toggle_overlay_command,
             // Workspace
             commands::workspace::launch_project,
             commands::workspace::reveal_project,

@@ -14,16 +14,12 @@ import { getCommands } from "../data/commands";
 import { getProjectCommands } from "../data/projectCommands";
 import { filterCommands } from "../utils/filterCommands";
 import { useCommandPaletteNavigation } from "../hooks/useCommandPaletteNavigation";
-
-function formatShortcut(shortcut: string) {
-  return shortcut
-    .split("Control").join("Ctrl")
-    .split("Meta").join("⌘")
-    .split("ArrowUp").join("↑")
-    .split("ArrowDown").join("↓")
-    .split("ArrowLeft").join("←")
-    .split("ArrowRight").join("→");
-}
+import {
+  displayShortcut,
+  getDefaultShortcut,
+  getOriginPlatform,
+  type OriginPlatform,
+} from "@/shared/utils/shortcuts";
 
 export default function CommandPalette() {
   const isOpen = useCommandPaletteStore(
@@ -47,6 +43,8 @@ export default function CommandPalette() {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] =
     useState(0);
+  const [platform, setPlatform] =
+    useState<OriginPlatform>("windows");
 
   const inputRef =
     useRef<HTMLInputElement>(null);
@@ -68,6 +66,10 @@ export default function CommandPalette() {
     setSelectedIndex(0);
     close();
   };
+
+  useEffect(() => {
+    setPlatform(getOriginPlatform());
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -136,7 +138,8 @@ export default function CommandPalette() {
                   settings.commandShortcuts[
                     command.id
                   ] ??
-                  command.defaultShortcut;
+                    command.defaultShortcut ??
+                    getDefaultShortcut(command.id, platform);
 
                 return (
                   <button
@@ -165,9 +168,7 @@ export default function CommandPalette() {
 
                     {shortcut ? (
                       <kbd className="shrink-0 rounded-[6px] border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] px-2 py-1 font-mono text-xs text-[var(--color-text-tertiary)]">
-                        {formatShortcut(
-                          shortcut
-                        )}
+                        {displayShortcut(shortcut, platform)}
                       </kbd>
                     ) : null}
                   </button>

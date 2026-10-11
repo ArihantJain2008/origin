@@ -65,6 +65,32 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Verify release version
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+
+          const packageVersion = JSON.parse(fs.readFileSync("package.json", "utf8")).version;
+          const packageLockVersion = JSON.parse(fs.readFileSync("package-lock.json", "utf8")).version;
+          const tauriVersion = JSON.parse(fs.readFileSync("src-tauri/tauri.conf.json", "utf8")).version;
+          const cargoText = fs.readFileSync("src-tauri/Cargo.toml", "utf8");
+          const cargoVersion = cargoText.match(/\[package\][\s\S]*?^version = "([^"]+)"/m)?.[1];
+          const lockText = fs.readFileSync("src-tauri/Cargo.lock", "utf8");
+          const lockVersion = lockText.match(/name = "origin"\nversion = "([^"]+)"/)?.[1];
+          const tagVersion = process.env.RELEASE_TAG.replace(/^v/, "");
+          const versions = { packageVersion, packageLockVersion, tauriVersion, cargoVersion, lockVersion, tagVersion };
+
+          if (Object.values(versions).some((version) => !version) || new Set(Object.values(versions)).size !== 1) {
+            console.error(versions);
+            process.exit(1);
+          }
+
+          console.log(`Release version verified: ${tagVersion}`);
+          NODE
+
       # ---------------------------------------------
       # Build + Release
       # ---------------------------------------------
@@ -99,7 +125,7 @@ jobs:
 
           releaseDraft: false
 
-          prerelease: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
 
           generateReleaseNotes: true
 

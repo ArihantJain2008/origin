@@ -7,10 +7,20 @@ import { applyTheme } from "../utils/applyTheme";
 import {
   saveSettings,
   loadSettings as loadSettingsFromApi,
+  updateOverlayShortcut,
 } from "../services/settingsApi";
+import {
+  getDefaultShortcut,
+  getOriginPlatform,
+  normalizeShortcut,
+  SHORTCUT_IDS,
+  type OriginPlatform,
+} from "@/shared/utils/shortcuts";
 
 interface SettingsStore {
   settings: Settings;
+
+  platform: OriginPlatform;
 
   setPreferredEditor: (
     editor: Editor
@@ -40,15 +50,17 @@ const defaultSettings: Settings = {
   theme: "dark",
 
   commandShortcuts: {
-    home: "Ctrl+H",
-    projects: "Ctrl+2",
-    settings: "Ctrl+,",
+    home: "CommandOrControl+H",
+    projects: "CommandOrControl+2",
+    settings: "CommandOrControl+,",
+    [SHORTCUT_IDS.commandPalette]: "CommandOrControl+K",
   },
 };
 
 export const useSettingsStore =
   create<SettingsStore>((set, get) => ({
     settings: defaultSettings,
+    platform: getOriginPlatform(),
 
     setPreferredEditor: async (editor) => {
       const settings = {
@@ -82,16 +94,40 @@ export const useSettingsStore =
       commandId,
       shortcut
     ) => {
+      const normalizedShortcut = normalizeShortcut(shortcut);
+      const previousShortcut =
+        get().settings.commandShortcuts[commandId] ??
+        getDefaultShortcut(commandId, get().platform);
+
+      if (!normalizedShortcut) {
+        throw new Error("Shortcut cannot be empty.");
+      }
+
+      if (commandId === SHORTCUT_IDS.overlay) {
+        await updateOverlayShortcut(normalizedShortcut);
+      }
+
       const settings = {
         ...get().settings,
 
         commandShortcuts: {
           ...get().settings.commandShortcuts,
-          [commandId]: shortcut,
+          [commandId]: normalizedShortcut,
         },
       };
 
-      await saveSettings(settings);
+      try {
+        await saveSettings(settings);
+      } catch (error) {
+        if (
+          commandId === SHORTCUT_IDS.overlay &&
+          previousShortcut
+        ) {
+          await updateOverlayShortcut(previousShortcut);
+        }
+
+        throw error;
+      }
 
       set({
         settings,
@@ -101,6 +137,17 @@ export const useSettingsStore =
     resetCommandShortcut: async (
       commandId
     ) => {
+      if (commandId === SHORTCUT_IDS.overlay) {
+        const defaultShortcut = getDefaultShortcut(
+          commandId,
+          get().platform
+        );
+
+        if (defaultShortcut) {
+          await updateOverlayShortcut(defaultShortcut);
+        }
+      }
+
       const commandShortcuts = {
         ...get().settings.commandShortcuts,
       };
@@ -121,6 +168,15 @@ export const useSettingsStore =
     },
 
     resetAllCommandShortcuts: async () => {
+      const defaultOverlayShortcut = getDefaultShortcut(
+        SHORTCUT_IDS.overlay,
+        get().platform
+      );
+
+      if (defaultOverlayShortcut) {
+        await updateOverlayShortcut(defaultOverlayShortcut);
+      }
+
       const settings = {
         ...get().settings,
 
@@ -139,6 +195,7 @@ export const useSettingsStore =
     loadSettings: async () => {
       const settings =
         await loadSettingsFromApi();
+      const platform = getOriginPlatform();
 
       const mergedSettings: Settings = {
         ...defaultSettings,
@@ -153,6 +210,7 @@ export const useSettingsStore =
 
       set({
         settings: mergedSettings,
+        platform,
       });
 
       applyTheme(mergedSettings.theme);

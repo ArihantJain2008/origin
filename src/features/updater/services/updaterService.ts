@@ -1,3 +1,4 @@
+import { getVersion } from "@tauri-apps/api/app";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 
@@ -6,7 +7,7 @@ export type UpdateStatus =
   | "checking"
   | "available"
   | "downloading"
-  | "installing"
+  | "up-to-date"
   | "error";
 
 export interface UpdateState {
@@ -18,9 +19,16 @@ export interface UpdateState {
 
 export async function checkForUpdate(): Promise<Update | null> {
   try {
-    const update = await check();
+    const [update, installedVersion] = await Promise.all([
+      check(),
+      getVersion(),
+    ]);
 
-    return update ?? null;
+    if (!update || compareVersions(update.version, installedVersion) <= 0) {
+      return null;
+    }
+
+    return update;
   } catch (error) {
     console.error(
       "[UPDATER] Failed to check for updates:",
@@ -85,4 +93,24 @@ export async function installUpdate(
   );
 
   await relaunch();
+}
+
+export function compareVersions(left: string, right: string): number {
+  const parse = (version: string) =>
+    version
+      .replace(/^v/i, "")
+      .split("-")[0]
+      .split(".")
+      .map((part) => Number.parseInt(part, 10) || 0);
+
+  const leftParts = parse(left);
+  const rightParts = parse(right);
+  const length = Math.max(leftParts.length, rightParts.length);
+
+  for (let index = 0; index < length; index += 1) {
+    const difference = (leftParts[index] ?? 0) - (rightParts[index] ?? 0);
+    if (difference !== 0) return difference;
+  }
+
+  return 0;
 }

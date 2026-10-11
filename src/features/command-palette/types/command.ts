@@ -2,7 +2,9 @@ export type CommandCategory =
   | "navigation"
   | "projects"
   | "editor"
-  | "application";
+  | "application"
+  | "overlay"
+  | "commandPalette";
 
 export interface Command {
   id: string;

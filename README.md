@@ -8,15 +8,15 @@ Origin is a desktop workspace built for developers to organize projects, analyze
 
 ## Current Status
 
-🚧 Active Development
+Stable release
 
 Version
 
-v0.6.0-alpha
+v1.0.0
 
-Current Sprint
+Current release
 
-Sprint 6 — Architecture Stabilization
+The published stable release is [Origin v1.0.0](https://github.com/ArihantJain2008/origin/releases/tag/v1.0.0). Future updates are offered only when a newer published release and signed updater manifest are available.
 
 ---
 

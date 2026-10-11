@@ -18,6 +18,7 @@
     "global-shortcut:allow-is-registered",
 "global-shortcut:allow-register",
 "global-shortcut:allow-unregister",
+  "os:default",
 "core:webview:allow-create-webview-window",
 
 "updater:default",

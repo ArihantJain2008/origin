@@ -14,6 +14,7 @@ export default function UpdateIndicator() {
     status,
     progress,
     error,
+    installedVersion,
     dismissed,
     install,
     dismiss,
@@ -66,15 +67,33 @@ export default function UpdateIndicator() {
     );
   }
 
+  if (status === "up-to-date") {
+    return (
+      <div className="fixed right-5 top-5 z-[9999] w-[300px] rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] p-4 shadow-2xl">
+        <div className="flex items-start gap-3">
+          <RefreshCw size={16} className="mt-0.5 text-[var(--color-text-secondary)]" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+              You&apos;re up to date
+            </p>
+            <p className="mt-1 text-xs text-[var(--color-text-tertiary)]">
+              Origin {installedVersion ?? "current"} is the latest published release.
+            </p>
+          </div>
+          <button type="button" aria-label="Dismiss update status" onClick={dismiss}>
+            <X size={15} className="text-[var(--color-text-tertiary)]" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!update) {
     return null;
   }
 
   const isDownloading =
     status === "downloading";
-
-  const isInstalling =
-    status === "installing";
 
   return (
     <div
@@ -106,7 +125,7 @@ export default function UpdateIndicator() {
               bg-[var(--color-bg-elevated)]
             "
           >
-            {isDownloading || isInstalling ? (
+            {isDownloading ? (
               <RefreshCw
                 size={16}
                 className="animate-spin text-[var(--color-text-secondary)]"
@@ -121,15 +140,10 @@ export default function UpdateIndicator() {
 
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-              {isInstalling
-                ? "Restarting Origin..."
-                : isDownloading
-                  ? "Updating Origin..."
-                  : "Update available"}
+              {isDownloading ? "Updating Origin..." : "Update available"}
             </p>
 
-            {!isDownloading &&
-              !isInstalling && (
+            {!isDownloading && (
                 <p className="mt-1 text-xs text-[var(--color-text-tertiary)]">
                   Origin {update.version} is
                   available.
@@ -138,9 +152,7 @@ export default function UpdateIndicator() {
           </div>
         </div>
 
-        {!isDownloading &&
-          !isInstalling &&
-          update.body && (
+        {!isDownloading && update.body && (
             <div
               className="
                 mt-3
@@ -194,15 +206,7 @@ export default function UpdateIndicator() {
           </div>
         )}
 
-        {isInstalling && (
-          <p className="mt-3 text-xs text-[var(--color-text-tertiary)]">
-            The update has been installed.
-            Origin will restart automatically.
-          </p>
-        )}
-
-        {!isDownloading &&
-          !isInstalling && (
+        {!isDownloading && (
             <div className="mt-4 flex justify-end gap-2">
               <Button
                 variant="ghost"
