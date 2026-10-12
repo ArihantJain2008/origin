@@ -209,12 +209,14 @@ fn launch_editor(executable: &str, path: &str) -> Result<Option<std::process::Ch
 
             let mut child = command
                 .spawn()
-                .map_err(|error| format!("Failed to launch {}: {}", executable, error));
+                .map_err(|error| format!("Failed to launch {}: {}", executable, error))?;
 
-            let status = child
-                .as_mut()
-                .and_then(|child| child.wait().ok())
-                .ok_or_else(|| format!("Failed to launch {}", executable))?;
+            let status = child.wait().map_err(|error| {
+                format!(
+                    "Failed while waiting for {} to launch: {}",
+                    executable, error
+                )
+            })?;
 
             if !status.success() {
                 return Err(format!(

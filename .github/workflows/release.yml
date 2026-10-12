@@ -79,7 +79,7 @@ jobs:
           const cargoText = fs.readFileSync("src-tauri/Cargo.toml", "utf8");
           const cargoVersion = cargoText.match(/\[package\][\s\S]*?^version = "([^"]+)"/m)?.[1];
           const lockText = fs.readFileSync("src-tauri/Cargo.lock", "utf8");
-          const lockVersion = lockText.match(/name = "origin"\nversion = "([^"]+)"/)?.[1];
+          const lockVersion = lockText.match(/\[\[package\]\]\s+name = "origin"\s+version = "([^"]+)"/)?.[1];
           const tagVersion = process.env.RELEASE_TAG.replace(/^v/, "");
           const versions = { packageVersion, packageLockVersion, tauriVersion, cargoVersion, lockVersion, tagVersion };
 
