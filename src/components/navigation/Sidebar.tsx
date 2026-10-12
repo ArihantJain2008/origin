@@ -16,21 +16,13 @@ import { Button } from "@/shared/components/ui";
 import { cn } from "@/lib/utils";
 
 import { useSettingsStore } from "@/features/settings/store/settingsStore";
-import { Editor } from "@/features/settings/types/editor";
+import {
+  editorLabels,
+  getAvailableEditors,
+  type Editor,
+} from "@/features/settings/types/editor";
 
 import { useUiPreferencesStore } from "@/shared/store/uiPreferencesStore";
-
-const editorLabels: Record<Editor, string> = {
-  vscode: "VS Code",
-  cursor: "Cursor",
-  windsurf: "Windsurf",
-};
-
-const editorOptions: Editor[] = [
-  "vscode",
-  "cursor",
-  "windsurf",
-];
 
 export default function Sidebar() {
   const collapsed = useUiPreferencesStore(
@@ -44,6 +36,17 @@ export default function Sidebar() {
   const settings = useSettingsStore(
     (state) => state.settings
   );
+
+  const platform = useSettingsStore(
+    (state) => state.platform
+  );
+
+  const editorOptions = getAvailableEditors(platform);
+  const selectedEditor = editorOptions.includes(
+    settings.preferredEditor
+  )
+    ? settings.preferredEditor
+    : "vscode";
 
   const setPreferredEditor = useSettingsStore(
     (state) => state.setPreferredEditor
@@ -170,9 +173,7 @@ export default function Sidebar() {
               )}
             >
               <span className="text-[13px] text-[var(--color-text-secondary)]">
-                {editorLabels[
-                  settings.preferredEditor
-                ]}
+                {editorLabels[selectedEditor]}
               </span>
 
               <ChevronDown

@@ -10,11 +10,26 @@ import { Card } from "@/shared/components/ui";
 import CommandSettings from "../components/CommandSettings";
 import { useSettingsStore } from "../store/settingsStore";
 import { Settings } from "../types/settings";
+import {
+  editorLabels,
+  getAvailableEditors,
+} from "../types/editor";
 
 export default function SettingsPage() {
   const settings = useSettingsStore(
     (state) => state.settings
   );
+
+  const platform = useSettingsStore(
+    (state) => state.platform
+  );
+
+  const availableEditors = getAvailableEditors(platform);
+  const selectedEditor = availableEditors.includes(
+    settings.preferredEditor
+  )
+    ? settings.preferredEditor
+    : "vscode";
 
   const setPreferredEditor =
     useSettingsStore(
@@ -156,7 +171,7 @@ export default function SettingsPage() {
 
                 <select
                   id="preferred-editor"
-                  value={settings.preferredEditor}
+                  value={selectedEditor}
                   onChange={(event) =>
                     setPreferredEditor(
                       event.target.value as typeof settings.preferredEditor
@@ -164,17 +179,11 @@ export default function SettingsPage() {
                   }
                   className="h-[38px] w-full rounded-[8px] border border-[var(--color-border-default)] bg-[var(--color-bg-canvas)] px-3 text-[13px] text-[var(--color-text-primary)] outline-none transition-colors focus:border-[var(--color-accent)]"
                 >
-                  <option value="vscode">
-                    VS Code
-                  </option>
-
-                  <option value="cursor">
-                    Cursor
-                  </option>
-
-                  <option value="windsurf">
-                    Windsurf
-                  </option>
+                  {availableEditors.map((editor) => (
+                    <option key={editor} value={editor}>
+                      {editorLabels[editor]}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

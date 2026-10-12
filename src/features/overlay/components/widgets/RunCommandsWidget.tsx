@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Play,
@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 
 import { RunCommand } from "@/features/projects/types/runCommand";
 
@@ -41,6 +42,10 @@ export default function RunCommandsWidget({
       {}
     );
 
+  const [launching, setLaunching] = useState<Record<string, boolean>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [output, setOutput] = useState<Record<string, string[]>>({});
+
   const [showForm, setShowForm] =
     useState(false);
 
@@ -50,10 +55,65 @@ export default function RunCommandsWidget({
   const [command, setCommand] =
     useState("");
 
+  useEffect(() => {
+    let active = true;
+    const eventId = `${projectId}:`;
+    let unlistenOutput: (() => void) | undefined;
+    let unlistenExit: (() => void) | undefined;
+
+    const subscribe = async () => {
+      const outputCleanup = await listen<{ id: string; text: string }>(
+        "run-command-output",
+        (event) => {
+          if (!active || !event.payload.id.startsWith(eventId)) return;
+          const commandId = event.payload.id.slice(eventId.length);
+          setOutput((state) => ({
+            ...state,
+            [commandId]: [...(state[commandId] ?? []).slice(-39), event.payload.text],
+          }));
+        }
+      );
+      const exitCleanup = await listen<{ id: string; success: boolean; code?: number }>(
+        "run-command-exited",
+        (event) => {
+          if (!active || !event.payload.id.startsWith(eventId)) return;
+          const commandId = event.payload.id.slice(eventId.length);
+          setRunning((state) => ({ ...state, [commandId]: false }));
+          if (!event.payload.success) {
+            setErrors((state) => ({
+              ...state,
+              [commandId]: `Command exited${event.payload.code == null ? "" : ` with code ${event.payload.code}`}`,
+            }));
+          }
+        }
+      );
+
+      if (!active) {
+        outputCleanup();
+        exitCleanup();
+        return;
+      }
+
+      unlistenOutput = outputCleanup;
+      unlistenExit = exitCleanup;
+    };
+
+    void subscribe();
+    return () => {
+      active = false;
+      unlistenOutput?.();
+      unlistenExit?.();
+    };
+  }, [projectId]);
+
   async function runCommand(
     commandId: string,
     commandValue: string
   ) {
+    if (running[commandId] || launching[commandId]) return;
+    setLaunching((state) => ({ ...state, [commandId]: true }));
+    setErrors((state) => ({ ...state, [commandId]: "" }));
+    setOutput((state) => ({ ...state, [commandId]: [] }));
     try {
         await invoke("launch_run_command", {
           id: `${projectId}:${commandId}`,
@@ -66,10 +126,13 @@ export default function RunCommandsWidget({
         [commandId]: true,
       }));
     } catch (error) {
+      setErrors((state) => ({ ...state, [commandId]: String(error) }));
       console.error(
         "Failed to launch command:",
         error
       );
+    } finally {
+      setLaunching((state) => ({ ...state, [commandId]: false }));
     }
   }
 
@@ -131,6 +194,9 @@ export default function RunCommandsWidget({
           const isRunning =
             running[item.id] ??
             false;
+          const isLaunching = launching[item.id] ?? false;
+          const commandOutput = output[item.id] ?? [];
+          const commandError = errors[item.id];
 
           return (
             <div
@@ -160,6 +226,7 @@ export default function RunCommandsWidget({
                         item.command
                       )
                 }
+                disabled={isLaunching}
                 className="
                   flex
                   h-7
@@ -210,6 +277,12 @@ export default function RunCommandsWidget({
                 </span>
               )}
 
+              {!isRunning && commandError && (
+                <span className="max-w-32 truncate text-[9px] text-red-400/70" title={commandError}>
+                  Error
+                </span>
+              )}
+
               <button
                 type="button"
                 onClick={() =>
@@ -231,6 +304,12 @@ export default function RunCommandsWidget({
               >
                 <Trash2 size={11} />
               </button>
+
+              {commandOutput.length > 0 && (
+                <pre className="max-h-16 overflow-auto whitespace-pre-wrap break-words font-mono text-[9px] text-white/35">
+                  {commandOutput.join("\n")}
+                </pre>
+              )}
             </div>
           );
         })}

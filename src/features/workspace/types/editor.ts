@@ -1,2 +1,1 @@
-export type Editor =
-  | "vscode";
+export type { Editor } from "@/features/settings/types/editor";

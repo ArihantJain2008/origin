@@ -1,12 +1,32 @@
 use serde::Serialize;
 use std::collections::HashMap;
+use std::io::{BufRead, BufReader, Read};
 use std::process::Command;
-use std::sync::Mutex;
-use tauri::State;
+#[cfg(not(target_os = "windows"))]
+use std::process::Stdio;
+use std::sync::{Arc, Mutex};
+use std::thread;
+use tauri::{AppHandle, Emitter, State};
 
 #[derive(Default)]
 pub struct ProcessState {
-    pub processes: Mutex<HashMap<String, u32>>,
+    pub processes: Arc<Mutex<HashMap<String, u32>>>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RunCommandOutput {
+    id: String,
+    stream: String,
+    text: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RunCommandExited {
+    id: String,
+    success: bool,
+    code: Option<i32>,
 }
 
 #[derive(Debug, Serialize)]
@@ -15,8 +35,29 @@ pub struct LaunchProcessResult {
     pub pid: u32,
 }
 
+fn spawn_output_reader<R: Read + Send + 'static>(
+    app: AppHandle,
+    id: String,
+    stream: &'static str,
+    output: R,
+) {
+    thread::spawn(move || {
+        for line in BufReader::new(output).lines().map_while(Result::ok) {
+            let _ = app.emit(
+                "run-command-output",
+                RunCommandOutput {
+                    id: id.clone(),
+                    stream: stream.to_string(),
+                    text: line,
+                },
+            );
+        }
+    });
+}
+
 #[tauri::command]
 pub fn launch_run_command(
+    app: AppHandle,
     state: State<'_, ProcessState>,
     id: String,
     command: String,
@@ -36,6 +77,15 @@ pub fn launch_run_command(
 
     if working_directory.trim().is_empty() {
         return Err("Working directory cannot be empty".to_string());
+    }
+
+    let mut processes = state
+        .processes
+        .lock()
+        .map_err(|_| "Failed to access process state".to_string())?;
+
+    if processes.contains_key(&id) {
+        return Err("Command is already running".to_string());
     }
 
     // ---------------------------------------------
@@ -103,13 +153,6 @@ pub fn launch_run_command(
         // cd frontend && npm install && npm run dev
         let command_script = commands.join(" && ");
 
-        println!("Origin launching command sequence:\n{}", command_script);
-
-        // IMPORTANT:
-        // Everything runs inside ONE cmd.exe session.
-        //
-        // /K keeps the terminal open after the commands
-        // finish, which is useful for development servers.
         Command::new("cmd.exe")
             .args(["/K", &command_script])
             .current_dir(&working_directory)
@@ -126,22 +169,12 @@ pub fn launch_run_command(
         // Normalize line endings first.
         let normalized_command = command.replace("\r\n", "\n").replace('\r', "\n");
 
-        println!("Origin launching command sequence:\n{}", normalized_command);
-
-        // Execute the entire multiline script in one shell
-        // session.
-        //
-        // Example:
-        //
-        // cd frontend
-        // npm install
-        // npm run dev
-        //
-        // stays as three commands in the same shell.
         Command::new("sh")
             .arg("-c")
             .arg(&normalized_command)
             .current_dir(&working_directory)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
             .spawn()
     };
 
@@ -153,16 +186,36 @@ pub fn launch_run_command(
 
     let pid = child.id();
 
-    // ---------------------------------------------
-    // Store process
-    // ---------------------------------------------
-
-    let mut processes = state
-        .processes
-        .lock()
-        .map_err(|_| "Failed to access process state".to_string())?;
-
     processes.insert(id.clone(), pid);
+    let processes = Arc::clone(&state.processes);
+    let event_id = id.clone();
+
+    thread::spawn(move || {
+        let mut child = child;
+
+        if let Some(output) = child.stdout.take() {
+            spawn_output_reader(app.clone(), event_id.clone(), "stdout", output);
+        }
+        if let Some(output) = child.stderr.take() {
+            spawn_output_reader(app.clone(), event_id.clone(), "stderr", output);
+        }
+
+        let result = child.wait();
+        if let Ok(mut processes) = processes.lock() {
+            processes.remove(&event_id);
+        }
+
+        if let Ok(status) = result {
+            let _ = app.emit(
+                "run-command-exited",
+                RunCommandExited {
+                    id: event_id,
+                    success: status.success(),
+                    code: status.code(),
+                },
+            );
+        }
+    });
 
     println!("Origin process started: {} (PID {})", id, pid);
 
@@ -188,7 +241,7 @@ pub fn stop_run_command(state: State<'_, ProcessState>, id: String) -> Result<()
     // Find process
     // ---------------------------------------------
 
-    let pid = match processes.remove(&id) {
+    let pid = match processes.get(&id).copied() {
         Some(pid) => pid,
 
         None => {
@@ -210,10 +263,14 @@ pub fn stop_run_command(state: State<'_, ProcessState>, id: String) -> Result<()
         // npm run dev
         //
         // because npm can spawn additional processes.
-        Command::new("taskkill")
+        let status = Command::new("taskkill")
             .args(["/PID", &pid.to_string(), "/T", "/F"])
-            .output()
+            .status()
             .map_err(|error| format!("Failed to stop process: {}", error))?;
+
+        if !status.success() {
+            return Err(format!("Failed to stop process (status: {})", status));
+        }
     }
 
     // ---------------------------------------------
@@ -222,11 +279,23 @@ pub fn stop_run_command(state: State<'_, ProcessState>, id: String) -> Result<()
 
     #[cfg(not(target_os = "windows"))]
     {
-        Command::new("kill")
+        // Shell commands such as npm can leave a direct child behind.
+        // pkill may return 1 when there are no matching children, which is harmless.
+        let _ = Command::new("pkill")
+            .args(["-TERM", "-P", &pid.to_string()])
+            .status();
+
+        let status = Command::new("kill")
             .arg(pid.to_string())
-            .output()
+            .status()
             .map_err(|error| format!("Failed to stop process: {}", error))?;
+
+        if !status.success() {
+            return Err(format!("Failed to stop process (status: {})", status));
+        }
     }
+
+    processes.remove(&id);
 
     println!("Origin process stopped: {} (PID {})", id, pid);
 
