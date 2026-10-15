@@ -2638,7 +2638,7 @@ dependencies = [
 
 [[package]]
 name = "origin"
-version = "1.0.9"
+version = "1.0.11"
 dependencies = [
  "chrono",
  "regex",
