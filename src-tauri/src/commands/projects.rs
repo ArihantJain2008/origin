@@ -7,6 +7,15 @@ use crate::{
 };
 
 #[tauri::command]
+pub fn create_project(
+    database: State<'_, Database>,
+    parent_path: String,
+    name: String,
+) -> Result<ProjectDto, String> {
+    project_service::create_project(&database, parent_path, name)
+}
+
+#[tauri::command]
 pub fn save_project(database: State<'_, Database>, project: ProjectDto) -> Result<(), String> {
     project_service::save_project(&database, project)
 }

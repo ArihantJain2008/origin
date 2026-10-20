@@ -292,6 +292,7 @@ pub fn run() {
             commands::workspace::open_path_in_editor,
             // Projects
             commands::projects::save_project,
+            commands::projects::create_project,
             commands::projects::load_projects,
             commands::projects::refresh_project_git,
             commands::projects::remove_project,

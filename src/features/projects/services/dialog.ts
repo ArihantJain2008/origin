@@ -9,3 +9,11 @@ export async function pickProjectFolder() {
 
   return folder;
 }
+
+export async function pickParentDirectory() {
+  return open({
+    directory: true,
+    multiple: false,
+    title: "Select Parent Directory",
+  });
+}

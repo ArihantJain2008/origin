@@ -66,3 +66,15 @@ export async function updateProjectFavorite(
     favorite,
   });
 }
+
+export async function createProject(
+  parentPath: string,
+  name: string
+): Promise<Project> {
+  const project = await invoke<ProjectDto>("create_project", {
+    parentPath,
+    name,
+  });
+
+  return mapProjectDto(project);
+}

@@ -30,6 +30,7 @@ import {
 
 import {
   saveProject,
+  createProject as createProjectFromApi,
 } from "@/features/projects/services/projectApi";
 
 import {
@@ -58,6 +59,7 @@ import {
 } from "@/features/projects/store/projectFolderStore";
 
 import { invoke } from "@tauri-apps/api/core";
+import { pickParentDirectory } from "@/features/projects/services/dialog";
 
 
 function normalizePath(path: string) {
@@ -145,6 +147,12 @@ export default function ProjectsPage() {
 
   const [folderStack, setFolderStack] =
     useState<string[]>([]);
+
+  const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectParent, setNewProjectParent] = useState<string | null>(null);
+  const [newProjectError, setNewProjectError] = useState<string | null>(null);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
 
   /*
    * Read any directory from the filesystem.
@@ -439,6 +447,42 @@ export default function ProjectsPage() {
       await refreshApplicationState();
     };
 
+  const handleChooseProjectParent = async () => {
+    const parent = await pickParentDirectory();
+    if (parent && typeof parent === "string") {
+      setNewProjectParent(parent);
+      setNewProjectError(null);
+    }
+  };
+
+  const handleCreateProject = async () => {
+    const name = newProjectName.trim();
+    if (!name) {
+      setNewProjectError("Project name is required.");
+      return;
+    }
+    if (!newProjectParent) {
+      setNewProjectError("Choose a parent directory.");
+      return;
+    }
+
+    setIsCreatingProject(true);
+    setNewProjectError(null);
+    try {
+      const project = await createProjectFromApi(newProjectParent, name);
+      await refreshApplicationState();
+      useProjectStore.getState().setActiveProject(project.id);
+      setIsNewProjectOpen(false);
+      setNewProjectName("");
+      setNewProjectParent(null);
+      window.alert(`Project "${project.name}" was created successfully.`);
+    } catch (error) {
+      setNewProjectError(String(error));
+    } finally {
+      setIsCreatingProject(false);
+    }
+  };
+
   /*
    * Currently opened Origin folder.
    */
@@ -603,90 +647,40 @@ export default function ProjectsPage() {
           {/* Header */}
 
           <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-
             <div>
-              <p className="text-[12px] font-medium uppercase tracking-[0.02em] text-[var(--color-text-tertiary)]">
-                Projects
-              </p>
-
+              <p className="text-[12px] font-medium uppercase tracking-[0.02em] text-[var(--color-text-tertiary)]">Projects</p>
               <h1 className="mt-2 text-[28px] font-bold leading-none tracking-tight text-[var(--color-text-primary)]">
                 Manage the list and get back to work.
               </h1>
             </div>
 
-            <div className="flex items-center gap-2">
-
-              {/* View switcher */}
-
+            <div className="flex flex-wrap items-center gap-2">
               <div className="flex rounded-[8px] border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] p-1">
-
-                <Button
-                  variant={
-                    projectView === "grid"
-                      ? "secondary"
-                      : "ghost"
-                  }
-                  size="sm"
-                  onClick={() =>
-                    setProjectView("grid")
-                  }
-                  aria-label="Grid view"
-                >
+                <Button variant={projectView === "grid" ? "secondary" : "ghost"} size="sm" onClick={() => setProjectView("grid")} aria-label="Grid view">
                   <Grid2X2 size={14} />
                 </Button>
-
-                <Button
-                  variant={
-                    projectView === "list"
-                      ? "secondary"
-                      : "ghost"
-                  }
-                  size="sm"
-                  onClick={() =>
-                    setProjectView("list")
-                  }
-                  aria-label="List view"
-                >
+                <Button variant={projectView === "list" ? "secondary" : "ghost"} size="sm" onClick={() => setProjectView("list")} aria-label="List view">
                   <List size={14} />
                 </Button>
-
               </div>
 
-              {/* Add controls */}
-
-              <div className="flex items-center gap-2">
-
-                <Button
-                  variant="secondary"
-                  onClick={handleAddFolder}
-                >
-                  <FolderPlus size={14} />
-                  <span>New Folder</span>
-                </Button>
-
-                <Button
-                  variant="secondary"
-                  onClick={
-                    handleAddExistingFolder
-                  }
-                >
-                  <Folder size={14} />
-                  <span>
-                    Add Existing Folder
-                  </span>
-                </Button>
-
-                <Button
-                  onClick={handleAddProject}
-                >
-                  <Plus size={14} />
-                  <span>Add Project</span>
-                </Button>
-
-              </div>
-
+              <Button onClick={() => { setNewProjectError(null); setIsNewProjectOpen(true); }}>
+                <Plus size={14} />
+                <span>New Project</span>
+              </Button>
+              <Button variant="secondary" onClick={handleAddFolder}>
+                <FolderPlus size={14} />
+                <span>New Folder</span>
+              </Button>
+              <Button variant="secondary" onClick={handleAddExistingFolder}>
+                <Folder size={14} />
+                <span>Add Existing Folder</span>
+              </Button>
+              <Button variant="secondary" onClick={handleAddProject}>
+                <Folder size={14} />
+                <span>Add Existing Project</span>
+              </Button>
             </div>
-
           </div>
 
           {/* Search */}
@@ -1149,6 +1143,90 @@ export default function ProjectsPage() {
 
           </div>
 
+        </div>
+      )}
+
+      {isNewProjectOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !isCreatingProject) {
+              setIsNewProjectOpen(false);
+            }
+          }}
+        >
+          <div
+            className="w-full max-w-lg rounded-[12px] border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] p-6 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="new-project-title"
+          >
+            <h2 id="new-project-title" className="text-lg font-semibold text-[var(--color-text-primary)]">
+              New Project
+            </h2>
+            <p className="mt-1 text-xs text-[var(--color-text-tertiary)]">
+              Create an empty project directory and add it to Origin.
+            </p>
+
+            <div className="mt-5 space-y-4">
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)]">
+                Project name
+                <Input
+                  autoFocus
+                  value={newProjectName}
+                  onChange={(event) => setNewProjectName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") void handleCreateProject();
+                  }}
+                  placeholder="my-project"
+                  className="mt-2"
+                  disabled={isCreatingProject}
+                  aria-invalid={Boolean(newProjectError)}
+                />
+              </label>
+
+              <div>
+                <label className="text-xs font-medium text-[var(--color-text-secondary)]" htmlFor="project-parent">
+                  Parent directory
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <Input
+                    id="project-parent"
+                    value={newProjectParent ?? ""}
+                    placeholder="Choose where the project should live"
+                    readOnly
+                    className="min-w-0 flex-1"
+                  />
+                  <Button variant="secondary" onClick={() => void handleChooseProjectParent()} disabled={isCreatingProject}>
+                    Browse
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-[var(--color-text-secondary)]" htmlFor="project-template">
+                  Template
+                </label>
+                <select id="project-template" className="mt-2 h-[34px] w-full rounded-[8px] border border-[var(--color-border-default)] bg-[var(--color-bg-canvas)] px-3 text-[13px] text-[var(--color-text-primary)]" disabled>
+                  <option>Empty Project</option>
+                </select>
+              </div>
+
+              <div className="rounded-[8px] bg-[var(--color-bg-elevated)] px-3 py-2 text-xs text-[var(--color-text-secondary)]">
+                Resulting path: <span className="break-all text-[var(--color-text-primary)]">{newProjectParent && newProjectName.trim() ? `${newProjectParent.replace(/[\\/]$/, "")}/${newProjectName.trim()}` : "Choose a location and enter a name"}</span>
+              </div>
+
+              {newProjectError && <p className="text-xs text-red-400" role="alert">{newProjectError}</p>}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setIsNewProjectOpen(false)} disabled={isCreatingProject}>Cancel</Button>
+              <Button onClick={() => void handleCreateProject()} disabled={isCreatingProject}>
+                {isCreatingProject ? "Creating..." : "Create Project"}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
