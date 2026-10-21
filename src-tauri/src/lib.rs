@@ -1,7 +1,11 @@
 // Learn more about Tauri commands at
 // https://tauri.app/develop/calling-rust/
 
-use std::sync::Mutex;
+use std::{
+    fs::{create_dir_all, OpenOptions},
+    io::Write,
+    sync::Mutex,
+};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -37,6 +41,23 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 const DEBUG_OPEN_OVERLAY_ON_STARTUP: bool = false;
 
 struct OverlayShortcutState(Mutex<Shortcut>);
+
+fn append_startup_log(app: &tauri::AppHandle, message: impl AsRef<str>) {
+    let Ok(app_data_dir) = app.path().app_data_dir() else {
+        return;
+    };
+
+    if create_dir_all(&app_data_dir).is_err() {
+        return;
+    }
+
+    let log_path = app_data_dir.join("startup.log");
+    let Ok(mut file) = OpenOptions::new().create(true).append(true).open(log_path) else {
+        return;
+    };
+
+    let _ = writeln!(file, "{}", message.as_ref());
+}
 
 fn default_overlay_shortcut() -> &'static str {
     #[cfg(target_os = "macos")]
@@ -152,7 +173,27 @@ pub fn run() {
         // =====================================================
         // Application Setup
         // =====================================================
+        .on_page_load(|window, payload| {
+            let message = format!(
+                "[STARTUP] page load for '{}' ({:?})",
+                window.label(),
+                payload.event()
+            );
+            println!("{}", message);
+            append_startup_log(&window.app_handle(), message);
+        })
+        .on_window_event(|window, event| {
+            let message = format!(
+                "[WINDOW] '{}' event: {:?}",
+                window.label(),
+                event
+            );
+            println!("{}", message);
+            append_startup_log(&window.app_handle(), message);
+        })
         .setup(|app| {
+            append_startup_log(&app.handle(), "[STARTUP] setup begin");
+
             // -------------------------------------------------
             // Database
             // -------------------------------------------------
@@ -173,6 +214,8 @@ pub fn run() {
             database
                 .initialize()
                 .expect("Failed to initialize database");
+
+            append_startup_log(&app.handle(), "[STARTUP] database initialized");
 
             app.manage(database);
 
@@ -198,6 +241,13 @@ pub fn run() {
             app.global_shortcut()
                 .register(overlay_shortcut)
                 .map_err(|error| {
+                    append_startup_log(
+                        &app.handle(),
+                        format!(
+                            "[STARTUP] overlay shortcut registration failed: {}",
+                            error
+                        ),
+                    );
                     format!(
                         "Failed to register Origin's global overlay shortcut ({}). It may conflict with an operating-system shortcut or another application.",
                         error
@@ -261,6 +311,7 @@ pub fn run() {
                 .build(app)?;
 
             println!("Origin system tray initialized.");
+            append_startup_log(&app.handle(), "[STARTUP] setup complete");
 
             if DEBUG_OPEN_OVERLAY_ON_STARTUP {
                 println!("[OVERLAY] debug startup open requested");
